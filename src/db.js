@@ -45,6 +45,7 @@ export function initDatabase() {
       duration_minutes INTEGER DEFAULT 15,
       question_count INTEGER DEFAULT 5,
       status TEXT DEFAULT 'in_progress',
+      question_queue TEXT DEFAULT '[]',
       overall_score REAL DEFAULT 0,
       clarity_avg REAL DEFAULT 0,
       relevance_avg REAL DEFAULT 0,
@@ -127,6 +128,13 @@ export function initDatabase() {
     CREATE INDEX IF NOT EXISTS idx_exchanges_session ON interview_exchanges(session_id);
     CREATE INDEX IF NOT EXISTS idx_daily_date ON daily_challenges(date_str);
   `);
+
+  // Migrate existing databases to add question_queue column
+  try {
+    db.exec("ALTER TABLE interview_sessions ADD COLUMN question_queue TEXT DEFAULT '[]';");
+  } catch (e) {
+    // Column already exists
+  }
 
   // Seed sample daily challenges and coding challenges if table is empty
   seedInitialData();

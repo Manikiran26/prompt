@@ -32,14 +32,32 @@ interviewRouter.post('/start', async (req, res) => {
     `);
     insertSession.run(sessionId, userId, role, interviewType, difficulty, durationMinutes, totalQuestions);
 
-    // Pick opening question
+    // Pick opening question - avoid questions asked in recent sessions
     const questions = getQuestionsForRole(role, difficulty, interviewType);
-    const firstQ = questions[0] || {
-      question: `Walk me through your engineering experience and how you approach complex problem-solving in a ${role} role.`,
-      category: 'Overview',
-      difficulty: difficulty,
-      type: interviewType
-    };
+    let firstQ = null;
+    try {
+      const recentQuestions = db.prepare(`
+        SELECT question_text FROM interview_exchanges 
+        WHERE session_id IN (SELECT id FROM interview_sessions WHERE user_id = ?)
+        ORDER BY id DESC LIMIT 25
+      `).all(userId).map(r => r.question_text.trim().toLowerCase());
+
+      const recentSet = new Set(recentQuestions);
+      const unusedQuestions = questions.filter(q => !recentSet.has(q.question.trim().toLowerCase()));
+      const candidatePool = unusedQuestions.length > 0 ? unusedQuestions : questions;
+      firstQ = candidatePool[Math.floor(Math.random() * candidatePool.length)];
+    } catch (e) {
+      firstQ = questions[Math.floor(Math.random() * questions.length)];
+    }
+
+    if (!firstQ) {
+      firstQ = {
+        question: `Walk me through your engineering experience and how you approach complex problem-solving in a ${role} role.`,
+        category: 'Overview',
+        difficulty: difficulty,
+        type: interviewType
+      };
+    }
 
     // Insert first exchange record
     const insertExchange = db.prepare(`
@@ -175,20 +193,40 @@ interviewRouter.post('/:sessionId/answer', async (req, res) => {
 
     let nextQuestion = null;
     if (!isComplete) {
-      // Fetch all covered questions so far to avoid repetition
-      const covered = db.prepare(`
-        SELECT question_text FROM interview_exchanges WHERE session_id = ?
-      `).all(sessionId).map(r => r.question_text);
+      // 1. Check if session has a pre-planned queue (e.g. for Resume-Based Interviews)
+      let queuedQuestion = null;
+      if (session.question_queue) {
+        try {
+          const queue = JSON.parse(session.question_queue || '[]');
+          if (Array.isArray(queue) && queue[nextIndex]) {
+            queuedQuestion = {
+              question: queue[nextIndex],
+              category: 'Resume Project Deep-Dive',
+              difficulty: session.difficulty || 'Intermediate',
+              type: 'Resume-Based Interview'
+            };
+          }
+        } catch (e) {}
+      }
 
-      nextQuestion = await generateAdaptiveQuestion({
-        role: session.role,
-        difficulty: session.difficulty,
-        interviewType: session.interview_type,
-        previousQuestion: latestExchange.question_text,
-        previousScore: evaluation.overall,
-        questionIndex: nextIndex,
-        coveredCategories: covered
-      });
+      if (queuedQuestion) {
+        nextQuestion = queuedQuestion;
+      } else {
+        // 2. Fetch all covered questions so far in this session to strictly avoid repetition
+        const covered = db.prepare(`
+          SELECT question_text FROM interview_exchanges WHERE session_id = ?
+        `).all(sessionId).map(r => r.question_text);
+
+        nextQuestion = await generateAdaptiveQuestion({
+          role: session.role,
+          difficulty: session.difficulty,
+          interviewType: session.interview_type,
+          previousQuestion: latestExchange.question_text,
+          previousScore: evaluation.overall,
+          questionIndex: nextIndex,
+          coveredCategories: covered
+        });
+      }
 
       // Insert new exchange row for next question
       db.prepare(`

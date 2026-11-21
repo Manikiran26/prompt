@@ -238,10 +238,10 @@ resumeRouter.post('/generate-interview', (req, res) => {
     const sessionId = randomUUID();
     const insertSession = db.prepare(`
       INSERT INTO interview_sessions (
-        id, user_id, role, interview_type, difficulty, duration_minutes, question_count, status
-      ) VALUES (?, ?, 'Full Stack Developer', 'Resume-Based Interview', 'Intermediate', 20, 5, 'in_progress')
+        id, user_id, role, interview_type, difficulty, duration_minutes, question_count, status, question_queue
+      ) VALUES (?, ?, 'Full Stack Developer', 'Resume-Based Interview', 'Intermediate', 20, 5, 'in_progress', ?)
     `);
-    insertSession.run(sessionId, userId);
+    insertSession.run(sessionId, userId, JSON.stringify(resumeQuestions));
 
     // Insert first question exchange
     db.prepare(`

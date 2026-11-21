@@ -19,7 +19,56 @@ export function getAiClient() {
   });
 }
 
-// Comprehensive Question Bank with Topic & Expected Concept Tags
+// Core Technical Vocabulary for validating technical & resume responses
+export const CORE_TECH_VOCABULARY = new Set([
+  'architecture', 'system', 'component', 'microservice', 'monolith', 'service', 'module', 'layer', 'mvc', 'mvvm',
+  'api', 'rest', 'graphql', 'grpc', 'websocket', 'endpoint', 'controller', 'middleware', 'route', 'payload',
+  'frontend', 'client', 'react', 'vue', 'angular', 'dom', 'vdom', 'state', 'props', 'hook', 'redux', 'context',
+  'render', 'reconciliation', 'lifecycle', 'css', 'html', 'bundle', 'webpack', 'vite', 'spa', 'ssr', 'ssg',
+  'backend', 'server', 'node', 'express', 'spring', 'django', 'flask', 'fastapi', 'thread', 'process', 'async',
+  'sync', 'event loop', 'concurrency', 'parallel', 'worker', 'queue', 'job', 'cron', 'memory', 'cpu', 'io',
+  'database', 'db', 'sql', 'nosql', 'table', 'schema', 'query', 'index', 'primary key', 'foreign key', 'join',
+  'transaction', 'acid', 'postgres', 'postgresql', 'mysql', 'mongodb', 'redis', 'cache', 'caching', 'sharding', 'replication',
+  'http', 'https', 'tcp', 'udp', 'ip', 'dns', 'ssl', 'tls', 'header', 'cookie', 'session', 'jwt', 'auth',
+  'cors', 'status code', 'latency', 'bandwidth', 'throughput', 'load balancer', 'proxy', 'reverse proxy', 'gateway',
+  'docker', 'container', 'kubernetes', 'k8s', 'cloud', 'aws', 'gcp', 'azure', 's3', 'ec2', 'lambda', 'ci/cd',
+  'pipeline', 'deploy', 'deployment', 'monitoring', 'metrics', 'logging', 'apm', 'grafana', 'prometheus',
+  'test', 'unit test', 'integration test', 'git', 'branch', 'merge', 'pr', 'commit', 'refactor', 'bottleneck',
+  'scale', 'scalability', 'performance', 'optimization', 'trade-off', 'security', 'vulnerability', 'sanitize',
+  'failover', 'redundancy', 'disaster recovery', 'rate limit', 'timeout', 'retry', 'circuit breaker',
+  'javascript', 'typescript', 'python', 'java', 'golang', 'rust', 'c++', 'c#', 'php', 'ruby'
+]);
+
+// Behavioral & HR Vocabulary
+export const BEHAVIORAL_VOCABULARY = new Set([
+  'situation', 'task', 'action', 'result', 'conflict', 'team', 'colleague', 'manager', 'resolved', 'deadline',
+  'compromise', 'communication', 'impact', 'learned', 'feedback', 'challenge', 'priority', 'collaborated',
+  'stakeholder', 'mentored', 'leadership', 'ownership', 'accountability', 'mistake', 'mitigated', 'goal'
+]);
+
+// Helper to count technical terms
+export function countTechnicalTerms(text) {
+  if (!text) return 0;
+  const words = text.toLowerCase().split(/[^a-z0-9+#_]+/);
+  let count = 0;
+  for (const w of words) {
+    if (CORE_TECH_VOCABULARY.has(w)) count++;
+  }
+  return count;
+}
+
+// Helper to count behavioral terms
+export function countBehavioralTerms(text) {
+  if (!text) return 0;
+  const words = text.toLowerCase().split(/[^a-z0-9]+/);
+  let count = 0;
+  for (const w of words) {
+    if (BEHAVIORAL_VOCABULARY.has(w)) count++;
+  }
+  return count;
+}
+
+// Comprehensive Question Bank with Topic & Expected Concept Tags (5+ questions per tier)
 export const QUESTION_REPOSITORY = {
   'Software Engineer': {
     Beginner: [
@@ -43,6 +92,20 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["linear history", "merge commit", "commit hash rewriting", "fast-forward", "conflict resolution"],
         wrongConcepts: ["rebase deletes commits permanently without trace", "merge is not recommended"]
+      },
+      {
+        question: "Explain the Stack and Queue data structures. What are their operations and real-world software applications?",
+        category: "Data Structures",
+        type: "Technical",
+        keyConcepts: ["LIFO vs FIFO", "push pop", "enqueue dequeue", "call stack", "message buffer", "O(1) operations"],
+        wrongConcepts: ["queue is LIFO", "stack is FIFO"]
+      },
+      {
+        question: "What is Big-O notation, and why is it essential for analyzing software algorithms? Contrast time complexity and space complexity.",
+        category: "Algorithms",
+        type: "Technical",
+        keyConcepts: ["asymptotic growth", "upper bound", "worst-case", "auxiliary memory", "scaling with input N"],
+        wrongConcepts: ["Big-O measures execution time in milliseconds", "O(N^2) is faster than O(N log N)"]
       }
     ],
     Intermediate: [
@@ -66,6 +129,20 @@ export const QUESTION_REPOSITORY = {
         type: "Behavioral / Technical",
         keyConcepts: ["monitoring", "profiler", "heap dump", "APM logs", "reproduction", "rollback", "root cause analysis", "postmortem"],
         wrongConcepts: ["rebooting server permanently fixes memory leak", "ignoring logs"]
+      },
+      {
+        question: "How do you design an in-memory Least Recently Used (LRU) Cache that supports O(1) get and O(1) put operations?",
+        category: "Data Structures & Design",
+        type: "Technical",
+        keyConcepts: ["doubly linked list", "hash map", "O(1) lookups", "eviction at tail", "moving accessed node to head"],
+        wrongConcepts: ["single array supports O(1) LRU eviction", "hash map alone tracks access order in O(1)"]
+      },
+      {
+        question: "Compare Binary Search Tree (BST) and Hash Table. Under what workloads is a balanced BST preferred over a Hash Table?",
+        category: "Data Structures",
+        type: "Technical",
+        keyConcepts: ["ordered traversal", "range queries", "worst-case tree degradation O(n)", "hash collisions", "O(log n) vs average O(1)"],
+        wrongConcepts: ["hash tables support range queries in O(log n)", "BST always has O(1) search"]
       }
     ],
     Advanced: [
@@ -82,6 +159,20 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["consistency", "availability", "partition tolerance", "latency", "quorum", "tunable consistency", "W + R > N", "vector clocks"],
         wrongConcepts: ["a system can provide CA during network partitions", "Cassandra is purely CP"]
+      },
+      {
+        question: "Design Twitter / X news feed generation. Contrast Fan-Out on Write (Push model) with Fan-Out on Read (Pull model) for celebrity vs regular users.",
+        category: "Large-Scale System Design",
+        type: "Technical",
+        keyConcepts: ["fan-out on write timeline cache", "fan-out on read for high follower celebrities", "hybrid architecture", "Redis timeline list", "pagination with cursor"],
+        wrongConcepts: ["querying all followed users with SQL join on every timeline load scales to 500M users", "fan-out on write works seamlessly for 100M follower accounts"]
+      },
+      {
+        question: "How do distributed consensus algorithms like Raft and Paxos work? Explain leader election, log replication, and split-brain prevention via quorums.",
+        category: "Distributed Consensus",
+        type: "Technical",
+        keyConcepts: ["leader election", "term numbers", "log replication", "heartbeats", "majority quorum (N/2 + 1)", "uncommitted entries rollback"],
+        wrongConcepts: ["split brain can be resolved without odd-numbered quorums", "followers accept writes directly without leader coordination"]
       }
     ]
   },
@@ -98,15 +189,29 @@ export const QUESTION_REPOSITORY = {
         question: "What are semantic HTML tags, and why are they crucial for accessibility (a11y) and SEO?",
         category: "Web Fundamentals",
         type: "Technical",
-        keyConcepts: ["screen readers", "nav", "article", "section", "main", "header", "ARIA roles", "SEO indexing"],
-        wrongConcepts: ["using divs everywhere with CSS is identical for accessibility", "semantic tags are only for styling"]
+        keyConcepts: ["screen readers", "article section nav header footer", "SEO indexing", "DOM accessibility tree", "ARIA roles"],
+        wrongConcepts: ["div tags provide better SEO than semantic tags", "semantic tags are purely decorative"]
       },
       {
-        question: "Explain JavaScript closures. Can you provide a code example of where closures are useful in real frontend development?",
+        question: "Explain JavaScript closures and lexical scope. Provide a concrete example of how closures are used in practice.",
         category: "JavaScript Core",
         type: "Technical",
-        keyConcepts: ["lexical scope", "outer function scope access", "data privacy", "state preservation", "callback functions", "memoization"],
+        keyConcepts: ["lexical environment", "retaining outer variables", "function factories", "data encapsulation", "private variables"],
         wrongConcepts: ["closures create global variables", "closure means a function has ended execution and deleted its variables"]
+      },
+      {
+        question: "Explain Event Bubbling and Event Capturing in the DOM. How does Event Delegation leverage bubbling to optimize event listeners?",
+        category: "DOM & Events",
+        type: "Technical",
+        keyConcepts: ["event propagation", "capturing phase", "target phase", "bubbling phase", "stopPropagation", "single parent listener for dynamic lists"],
+        wrongConcepts: ["events only trigger on the exact element clicked without bubbling", "event delegation increases memory usage"]
+      },
+      {
+        question: "Compare LocalStorage, SessionStorage, and Cookies. When should each storage mechanism be used in a frontend application?",
+        category: "Browser Storage",
+        type: "Technical",
+        keyConcepts: ["persistence across tabs", "session lifetime", "size limit 5MB vs 4KB", "httpOnly cookies for security", "CSRF considerations"],
+        wrongConcepts: ["localStorage is automatically sent with HTTP requests", "cookies can store 50MB of data"]
       }
     ],
     Intermediate: [
@@ -123,6 +228,27 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["Largest Contentful Paint", "Cumulative Layout Shift", "Interaction to Next Paint", "code splitting", "image optimization WebP", "lazy loading", "font-display swap", "aspect-ratio"],
         wrongConcepts: ["CLS measures CPU speed", "bundle size does not affect LCP", "inline all scripts in HTML head"]
+      },
+      {
+        question: "Explain the React useEffect hook lifecycle, dependency arrays, and cleanup functions. How do you prevent memory leaks and stale closures?",
+        category: "React Hooks",
+        type: "Technical",
+        keyConcepts: ["dependency array", "cleanup function", "unmounting subscriptions", "stale closures in async callbacks", "useCallback useMemo"],
+        wrongConcepts: ["empty dependency array runs on every state change", "cleanup function runs before component mounts"]
+      },
+      {
+        question: "Compare client-side state management approaches: React Context API vs Redux Toolkit vs Zustand. When is Context sufficient vs when is an external store needed?",
+        category: "State Management",
+        type: "Technical",
+        keyConcepts: ["unnecessary re-renders with context", "global store", "selectors", "middleware async thunks", "boiler-plate comparison"],
+        wrongConcepts: ["React Context is designed for high-frequency state updates like animations", "Redux is built into React core"]
+      },
+      {
+        question: "Explain Server-Side Rendering (SSR) vs Static Site Generation (SSG) in Next.js. What are their respective benefits for SEO and initial page load?",
+        category: "Modern Frontend Frameworks",
+        type: "Technical",
+        keyConcepts: ["pre-rendering at build time vs request time", "hydration", "Time to First Byte (TTFB)", "dynamic data vs static marketing pages", "incremental static regeneration"],
+        wrongConcepts: ["SSG requires a Node.js server running on every request", "SSR does not support search engine indexing"]
       }
     ],
     Advanced: [
@@ -132,6 +258,20 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["Webpack Module Federation", "shared dependencies", "independent deployment", "CSS namespace collisions", "version skew", "runtime overhead"],
         wrongConcepts: ["micro-frontends always increase performance", "iframes allow seamless single-page navigation without cross-origin messaging"]
+      },
+      {
+        question: "Explain React Fiber architecture in detail. How does Fiber enable concurrent rendering, lane prioritization, and non-blocking UI updates?",
+        category: "React Internals",
+        type: "Technical",
+        keyConcepts: ["fiber node linked list", "workInProgress tree", "time slicing", "requestIdleCallback / MessageChannel scheduler", "priority lanes", "interruptible rendering"],
+        wrongConcepts: ["Fiber uses multithreading in web workers", "Fiber is just the Virtual DOM renamed"]
+      },
+      {
+        question: "How do you detect, profile, and fix memory leaks in complex Single-Page Applications (SPAs) using Chrome DevTools Memory Profiler?",
+        category: "Profiling & Performance",
+        type: "Technical",
+        keyConcepts: ["heap snapshots", "detached DOM trees", "retained size vs shallow size", "event listener leaks", "un-cleared timers / intervals", "closures holding large objects"],
+        wrongConcepts: ["reloading page in production permanently resolves SPA leaks", "JavaScript automatically cleans up window event listeners on component unmount"]
       }
     ]
   },
@@ -150,6 +290,20 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["idempotency", "PUT replaces vs PATCH updates", "statelessness", "resource URIs", "401 vs 403", "500 server error"],
         wrongConcepts: ["GET requests should modify database data", "POST is idempotent", "404 means server crashed"]
+      },
+      {
+        question: "What is an API Gateway in backend architectures, and what critical functions does it perform?",
+        category: "Backend Architecture",
+        type: "Technical",
+        keyConcepts: ["reverse proxy", "routing", "authentication & authorization", "rate limiting & throttling", "SSL termination", "request aggregation"],
+        wrongConcepts: ["API gateway replaces backend databases", "API gateway executes application business logic directly"]
+      },
+      {
+        question: "Explain the difference between session-based authentication and token-based authentication (JWT). What are the pros and cons of each?",
+        category: "Authentication",
+        type: "Technical",
+        keyConcepts: ["stateful vs stateless", "server memory / Redis store", "httpOnly cookie", "CSRF vs XSS", "token revocation trade-offs"],
+        wrongConcepts: ["JWT tokens cannot be stolen", "sessions cannot work with mobile apps"]
       }
     ],
     Intermediate: [
@@ -166,6 +320,20 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["httpOnly cookies", "CSRF protection", "JWT statelessness", "token expiry", "refresh token rotation", "blacklist in Redis", "password hashing scrypt/bcrypt"],
         wrongConcepts: ["store plain JWT in localStorage without XSS protection", "store plain text passwords", "JWT tokens can be invalidated automatically without state"]
+      },
+      {
+        question: "Explain database connection pooling. Why is it essential in high-traffic applications, and what happens when pool limits are misconfigured?",
+        category: "Database Performance",
+        type: "Technical",
+        keyConcepts: ["TCP handshake cost", "reusable connections", "max pool size", "connection timeout / queuing", "database worker exhaustion"],
+        wrongConcepts: ["creating a brand new database connection per HTTP request is optimal", "infinite pool size improves database speed"]
+      },
+      {
+        question: "How do you design asynchronous background processing using message queues (such as BullMQ, RabbitMQ, or SQS)? Explain dead-letter queues and retry backoff.",
+        category: "Asynchronous Architecture",
+        type: "Technical",
+        keyConcepts: ["producer consumer", "decoupling", "exponential backoff", "idempotent job processing", "dead letter queue DLQ", "worker scaling"],
+        wrongConcepts: ["message queues execute code synchronously inside the HTTP handler", "failed jobs should be retried infinitely without delay"]
       }
     ],
     Advanced: [
@@ -175,6 +343,20 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["two-phase commit limitations", "choreography with event broker Kafka", "orchestrator state machine", "compensating actions", "idempotency", "outbox pattern"],
         wrongConcepts: ["Sagas provide immediate ACID isolation", "compensating transactions are never needed if an error occurs"]
+      },
+      {
+        question: "Explain Database Sharding strategies (Hash-based vs Range-based). How do you handle cross-shard queries, re-sharding, and distributed transactions?",
+        category: "Database Scalability",
+        type: "Technical",
+        keyConcepts: ["shard key selection", "consistent hashing", "scatter-gather queries", "hotspot prevention", "virtual nodes", "two-phase commit"],
+        wrongConcepts: ["sharding is identical to read-replicas", "cross-shard joins run in O(1) time"]
+      },
+      {
+        question: "How do you perform zero-downtime database schema migrations on a table with 100 million active rows receiving 5,000 writes/second?",
+        category: "Database Reliability",
+        type: "Technical",
+        keyConcepts: ["expand and contract pattern", "dual writing", "online schema change (gh-ost / pt-online-schema-change)", "shadow table", "backfilling in batches", "atomic swap"],
+        wrongConcepts: ["running ALTER TABLE ADD COLUMN directly in single transaction without locking", "stopping the database during business hours"]
       }
     ]
   },
@@ -186,6 +368,20 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["DNS resolution", "TCP 3-way handshake", "TLS negotiation", "HTTP GET request", "server routing", "HTML parsing", "DOM tree", "render tree"],
         wrongConcepts: ["browser immediately paints page without DNS", "TLS handshake happens before TCP connection"]
+      },
+      {
+        question: "Explain CORS (Cross-Origin Resource Sharing). Why does the browser trigger preflight OPTIONS requests, and how do you configure CORS headers securely?",
+        category: "Web Security",
+        type: "Technical",
+        keyConcepts: ["same-origin policy", "Access-Control-Allow-Origin", "preflight OPTIONS", "custom headers", "withCredentials", "avoiding wildcard with credentials"],
+        wrongConcepts: ["CORS is enforced by backend servers", "Access-Control-Allow-Origin '*' with credentials is valid and secure"]
+      },
+      {
+        question: "Explain the Model-View-Controller (MVC) architectural pattern. How are responsibilities segregated across the frontend and backend?",
+        category: "Architecture",
+        type: "Technical",
+        keyConcepts: ["separation of concerns", "model encapsulates data", "view handles presentation", "controller processes requests", "maintainability"],
+        wrongConcepts: ["view should query the database directly", "models handle HTML rendering"]
       }
     ],
     Intermediate: [
@@ -195,6 +391,20 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["bidirectional vs unidirectional", "HTTP upgrade", "heartbeats/ping-pong", "connection pooling", "Redis Pub/Sub for horizontal scaling", "reconnection backoff"],
         wrongConcepts: ["SSE supports binary uploads from client to server", "WebSockets use standard HTTP polling on every message"]
+      },
+      {
+        question: "How do you design an idempotent payment processing webhook endpoint that receives transaction notifications from Stripe or PayPal?",
+        category: "API & Reliability",
+        type: "Technical",
+        keyConcepts: ["idempotency key", "signature verification", "replay attack protection", "database unique constraint", "acknowledging 200 quickly", "asynchronous processing"],
+        wrongConcepts: ["execute long processing before sending HTTP 200 to webhook", "trust webhook payload without signature validation"]
+      },
+      {
+        question: "How do you containerize a full-stack application (React frontend, Node/Express backend, PostgreSQL database) using Docker and Docker Compose for production and local development?",
+        category: "DevOps & Containers",
+        type: "Technical",
+        keyConcepts: ["multi-stage builds", "Docker Compose services", "network bridge", "volume persistence", "environment variables", "non-root user security"],
+        wrongConcepts: ["commit database data directly into Docker image layer", "run containers as root in production"]
       }
     ],
     Advanced: [
@@ -204,6 +414,13 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["presigned S3 URLs", "multipart chunked upload", "tus protocol", "message queue SQS/RabbitMQ", "worker nodes FFmpeg", "HLS streaming", "CloudFront caching"],
         wrongConcepts: ["buffer entire 5GB video in Node.js server RAM before writing to disk", "upload directly through single monolithic HTTP request"]
+      },
+      {
+        question: "Design an end-to-end full-text search architecture for an e-commerce platform using PostgreSQL and Elasticsearch. How do you synchronize catalog updates in real time?",
+        category: "Distributed Search",
+        type: "Technical",
+        keyConcepts: ["inverted index", "Change Data Capture (CDC / Debezium)", "Kafka event stream", "eventual consistency", "fuzzy matching & autocomplete", "re-indexing"],
+        wrongConcepts: ["use SQL LIKE '%query%' for full text search on 50M items", "update Elasticsearch synchronously inside client purchase transaction"]
       }
     ]
   },
@@ -222,6 +439,13 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["reference equality vs value equality", "String pool", "HashMap contract", "hash bucket distribution", "collisions"],
         wrongConcepts: ["== always compares object values", "hashCode does not affect HashMap lookups"]
+      },
+      {
+        question: "Explain the 4 fundamental pillars of Object-Oriented Programming (OOP) in Java: Encapsulation, Inheritance, Polymorphism, and Abstraction.",
+        category: "OOP Fundamentals",
+        type: "Technical",
+        keyConcepts: ["getters setters private fields", "extends vs implements", "method overloading vs overriding", "abstract classes vs interfaces"],
+        wrongConcepts: ["Java supports multiple inheritance with classes directly", "interfaces can have stateful instance variables"]
       }
     ],
     Intermediate: [
@@ -238,6 +462,13 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["IoC container", "ApplicationContext", "bean lifecycle", "constructor injection vs field injection", "persistence exception translation", "singleton scope default"],
         wrongConcepts: ["field injection is recommended over constructor injection", "beans are recreated on every method call by default"]
+      },
+      {
+        question: "Explain the JPA / Hibernate N+1 select query problem. How do you detect it, and how do you resolve it using JOIN FETCH or @EntityGraph?",
+        category: "JPA & Hibernate",
+        type: "Technical",
+        keyConcepts: ["lazy loading", "individual query per child entity", "JOIN FETCH in JPQL", "EntityGraph", "batch fetch size hibernate.default_batch_fetch_size"],
+        wrongConcepts: ["switching everything to EAGER fetching permanently fixes N+1", "Hibernate automatically optimizes lazy queries into single join"]
       }
     ],
     Advanced: [
@@ -247,6 +478,13 @@ export const QUESTION_REPOSITORY = {
         type: "Technical",
         keyConcepts: ["memory visibility", "CPU cache coherency", "lock striping", "optimistic locking StampedLock", "carrier threads", "mounting/unmounting virtual threads on blocking I/O"],
         wrongConcepts: ["volatile makes compound operations like i++ atomic", "virtual threads are designed for CPU-intensive calculation"]
+      },
+      {
+        question: "How do you tune JVM memory and diagnose OutOfMemoryError (OOM)? Explain Metaspace vs Heap, heap dump analysis using Eclipse MAT, and garbage collection logs.",
+        category: "JVM Tuning & Profiling",
+        type: "Technical",
+        keyConcepts: ["-Xmx -Xms -XX:MaxMetaspaceSize", "HeapDumpOnOutOfMemoryError", "dominator tree", "retained memory", "GC pause times", "leak suspects"],
+        wrongConcepts: ["increasing heap size to 64GB unconditionally fixes memory leaks", "Metaspace is stored inside Java heap"]
       }
     ]
   },
@@ -315,6 +553,20 @@ export const QUESTION_REPOSITORY = {
         type: "Behavioral",
         keyConcepts: ["ownership", "early communication", "mitigation plan", "learning from failure", "preventative measures"],
         wrongConcepts: ["hiding the mistake until discovered", "claiming you have never made any mistakes"]
+      },
+      {
+        question: "Tell me about a time you had to adapt quickly to a major change in requirements or project direction right before a deadline. How did you prioritize?",
+        category: "Adaptability",
+        type: "Behavioral",
+        keyConcepts: ["triage", "stakeholder communication", "scope negotiation", "calm execution", "post-release stabilization"],
+        wrongConcepts: ["refusing to work on changed requirements", "panicking and abandoning quality checks"]
+      },
+      {
+        question: "Describe a project where you took leadership initiative without being formally asked. What drove you and what was the tangible impact?",
+        category: "Leadership & Initiative",
+        type: "Behavioral",
+        keyConcepts: ["proactive problem discovery", "consensus building", "measurable business impact", "documentation & handover"],
+        wrongConcepts: ["imposing decisions without team agreement", "claiming all credit alone"]
       }
     ]
   }
@@ -367,22 +619,6 @@ function isGibberishOrNonsense(text) {
 
   // Check for common keyboard smashing patterns
   if (/^[asdfghjklqwertyuiopzxcvbnm\s,.;:!?-]+$/i.test(clean) && vowelRatio < 0.18 && letters.length >= 6) {
-    return true;
-  }
-
-  // Common vocabulary check
-  const commonWords = new Set([
-    'the','be','to','of','and','a','in','that','have','i','it','for','not','on','with','he','as','you','do','at','this',
-    'but','his','by','from','they','we','say','her','she','or','an','will','my','one','all','would','there','their','what',
-    'so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know',
-    'take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come',
-    'its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because',
-    'any','these','give','day','most','us','is','are','was','were','has','had','been','data','system','code','query','server',
-    'react','http','web','api','sql','database','index','cache','memory','thread','method','function','class','protocol','network'
-  ]);
-
-  const recognizedWordCount = words.filter(w => commonWords.has(w.toLowerCase())).length;
-  if (recognizedWordCount === 0 && words.length <= 4) {
     return true;
   }
 
@@ -443,6 +679,79 @@ export function isQuestionEchoOrParrot(question, answer) {
 }
 
 /**
+ * Synthesizes dynamic key architectural concepts for custom or resume-generated questions
+ */
+export function synthesizeDynamicConceptsForQuestion(question, role = '') {
+  const lowerQ = (question || '').toLowerCase();
+  const keyConcepts = [];
+  const wrongConcepts = [];
+
+  if (lowerQ.includes('architecture') || lowerQ.includes('high-level') || lowerQ.includes('walk me through')) {
+    keyConcepts.push(
+      'component hierarchy and modular layer separation',
+      'API communication and asynchronous data fetching',
+      'persistence layer and relational database schema',
+      'state management and caching layer',
+      'error boundaries and production deployment'
+    );
+    wrongConcepts.push('architecture requires monolithic state with direct database access from frontend');
+  }
+
+  if (lowerQ.includes('bottleneck') || lowerQ.includes('scalability') || lowerQ.includes('performance')) {
+    keyConcepts.push(
+      'query optimization and database indexing',
+      'caching layer (Redis/Memcached)',
+      'asynchronous processing and worker queues',
+      'profiling, latency measurement and APM metrics',
+      'load balancing and connection pooling'
+    );
+    wrongConcepts.push('simply restarting the server resolves architectural bottlenecks permanently');
+  }
+
+  if (lowerQ.includes('consistency') || lowerQ.includes('peak load') || lowerQ.includes('concurrency')) {
+    keyConcepts.push(
+      'database transactions and ACID isolation',
+      'rate limiting and request throttling',
+      'connection pooling and graceful timeouts',
+      'read replicas and message queue buffering',
+      'idempotency and retry strategies'
+    );
+    wrongConcepts.push('database locks should be held indefinitely during network HTTP calls');
+  }
+
+  if (lowerQ.includes('trade-off') || lowerQ.includes('technical debt')) {
+    keyConcepts.push(
+      'delivery velocity vs long-term maintainability',
+      'modular refactoring and test automation',
+      'documentation and team communication',
+      'architectural risk assessment and mitigation'
+    );
+  }
+
+  if (lowerQ.includes('10x') || lowerQ.includes('throughput') || lowerQ.includes('re-architecting')) {
+    keyConcepts.push(
+      'horizontal scaling with stateless application servers',
+      'distributed caching and CDN asset offloading',
+      'event-driven architecture with message queues (Kafka/RabbitMQ)',
+      'database sharding and read-write replication',
+      'asynchronous background batch processing'
+    );
+    wrongConcepts.push('a single monolithic database server can scale vertically to 10x without sharding or caching');
+  }
+
+  if (keyConcepts.length === 0) {
+    keyConcepts.push(
+      'system modularity and clean architectural patterns',
+      'defensive programming and error handling',
+      'production logging and observability',
+      'performance optimization and test coverage'
+    );
+  }
+
+  return { keyConcepts, wrongConcepts };
+}
+
+/**
  * Intelligent Concept-Aware Semantic Evaluator
  * Evaluates the answer against the specific question's core concepts.
  * Detects wrong answers, nonsense, "I don't know", and incorrect statements.
@@ -483,10 +792,10 @@ export async function evaluateAnswerIntelligently({ question, userAnswer, role, 
       overall: 0.0,
       strengths: ["None. The submitted response merely copies or repeats the question prompt."],
       missingConcepts: ["You echoed the prompt instead of providing an actual technical explanation or solution."],
-      incorrectConcepts: [`Question Echo Detected: The submitted response repeats the question prompt ("${trimmed.slice(0, 80)}...") without answering it.`],
+      incorrectConcepts: [`Question Echo Detected: The submitted response repeats the question prompt without answering it.`],
       improvements: [
         "Do not copy or paste the question text into the response box.",
-        "Provide a substantive technical explanation answering the core principles, mechanisms, and trade-offs."
+        "Provide a direct technical explanation addressing the core principles, architecture, and trade-offs."
       ],
       strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
       adaptiveHint: "Question echoed back without an answer (0.0/10). Re-asking a foundational question to gauge comprehension."
@@ -533,7 +842,7 @@ export async function evaluateAnswerIntelligently({ question, userAnswer, role, 
     };
   }
 
-  // 4. Try real OpenAI evaluation if client is configured
+  // 5. Try real OpenAI evaluation if client is configured
   if (openai) {
     try {
       const prompt = `
@@ -554,7 +863,7 @@ Evaluate the candidate's answer strictly and fairly using the 10-point rubric:
 
 IMPORTANT CRITICAL RULES:
 - If the candidate merely copies, repeats, echoes, or paraphrases the question prompt (or just appends placeholder phrases like "Your response"), give STRICTLY 0.0 across all dimensions (overall: 0.0, correctness: 0.0, relevance: 0.0, depth: 0.0, clarity: 0.0, problemSolving: 0.0)!
-- If the answer is completely off-topic or irrelevant (e.g. talking about food, movies, or unrelated topics), give 0.0 for Relevance, Correctness, and Overall = 0.0!
+- If the answer is completely off-topic or irrelevant (e.g. talking about food, movies, personal hobbies, or unrelated non-technical topics), give 0.0 for Relevance, Correctness, and Overall = 0.0!
 - If the answer is factually WRONG or claims incorrect things, give low scores (1.0-3.0) in Technical Correctness and Relevance!
 - Do NOT inflate scores for length alone or for repeating the prompt's own keywords without explaining them.
 
@@ -591,15 +900,15 @@ Return ONLY a valid JSON object matching this schema:
     }
   }
 
-  // 5. High-Precision Semantic Concept Validator (Zero-Dummy Engine)
-  return performSemanticConceptValidation(question, trimmed, role, difficulty);
+  // 6. High-Precision Semantic Concept Validator (Zero-Dummy Engine)
+  return performSemanticConceptValidation(question, trimmed, role, difficulty, interviewType);
 }
 
 /**
  * Semantic Concept & Misconception Validator
  * Evaluates semantic content, detects incorrect claims, and scores accurately.
  */
-function performSemanticConceptValidation(question, answer, role, difficulty) {
+function performSemanticConceptValidation(question, answer, role, difficulty, interviewType = 'Technical') {
   // Check if answer is an echo or copy of the question
   if (isQuestionEchoOrParrot(question, answer)) {
     return {
@@ -644,6 +953,31 @@ function performSemanticConceptValidation(question, answer, role, difficulty) {
     return clean.length > 2 && !qWordSet.has(clean) && !stopWords.has(clean);
   });
 
+  const isBehavioral = interviewType.toLowerCase().includes('behavioral') || interviewType.toLowerCase().includes('hr');
+  const techTermsCount = countTechnicalTerms(lowerAnswer);
+  const behavioralTermsCount = countBehavioralTerms(lowerAnswer);
+
+  // Strict Check: Non-technical or off-topic answer to technical / resume interview
+  if (!isBehavioral && techTermsCount === 0 && novelWords.length < 20) {
+    return {
+      clarity: 0.0,
+      relevance: 0.0,
+      depth: 0.0,
+      communication: 0.0,
+      problemSolving: 0.0,
+      overall: 0.0,
+      strengths: ["None. The submitted response does not answer the technical question asked."],
+      missingConcepts: ["You must explain the technical architecture, components, databases, trade-offs, or implementation details."],
+      incorrectConcepts: ["Off-Topic / Non-Technical Response: Your answer does not discuss any relevant software engineering concepts or technical architectures."],
+      improvements: [
+        "Address the specific technical prompt directly.",
+        "Include concrete technical mechanisms (e.g. data structures, frameworks, databases, or trade-offs)."
+      ],
+      strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
+      adaptiveHint: "Non-technical response detected (0.0/10). Re-asking a foundational engineering question."
+    };
+  }
+
   // Find the exact or highest-overlap matching question in QUESTION_REPOSITORY
   let bestMatchItem = null;
   let bestMatchScore = 0;
@@ -666,7 +1000,7 @@ function performSemanticConceptValidation(question, answer, role, difficulty) {
           qTerms.forEach(t => {
             if (itemLower.includes(t)) overlap++;
           });
-          if (overlap > bestMatchScore) {
+          if (overlap > bestMatchScore && overlap >= 3) {
             bestMatchScore = overlap;
             bestMatchItem = item;
           }
@@ -677,8 +1011,18 @@ function performSemanticConceptValidation(question, answer, role, difficulty) {
     if (bestMatchScore === 999) break;
   }
 
-  const allConcepts = bestMatchItem ? (bestMatchItem.keyConcepts || []) : [];
-  const wrongConceptsList = bestMatchItem ? (bestMatchItem.wrongConcepts || []) : [];
+  // If question is not in static repository (e.g. dynamic Resume interview question), synthesize target concepts
+  let allConcepts = [];
+  let wrongConceptsList = [];
+
+  if (bestMatchItem && bestMatchScore >= 3) {
+    allConcepts = bestMatchItem.keyConcepts || [];
+    wrongConceptsList = bestMatchItem.wrongConcepts || [];
+  } else {
+    const synthesized = synthesizeDynamicConceptsForQuestion(question, role);
+    allConcepts = synthesized.keyConcepts;
+    wrongConceptsList = synthesized.wrongConcepts;
+  }
 
   // Match key concepts:
   // Must demonstrate genuine knowledge, not merely parrot words already present in the prompt
@@ -730,7 +1074,7 @@ function performSemanticConceptValidation(question, answer, role, difficulty) {
 
   // Check for nonsense, gibberish, or completely off-topic response
   const hasNonsense = /(asdf|qwer|blah|dummy|test test|cheese|cats|pizza|nothing|whatever|lol|haha|random)/i.test(lowerAnswer);
-  const isOffTopic = questionRelevanceRatio < 0.15 && matchedConcepts.length === 0;
+  const isOffTopic = (!isBehavioral && techTermsCount === 0) || (questionRelevanceRatio < 0.10 && matchedConcepts.length === 0);
 
   let correctness = 5.0;
   let relevance = 5.0;
@@ -745,9 +1089,9 @@ function performSemanticConceptValidation(question, answer, role, difficulty) {
     depth = 0.0;
     clarity = 0.0;
     problemSolving = 0.0;
-  } else if (novelWords.length < 10) {
-    // Extremely thin / repeating prompt with minimal addition
-    correctness = 1.0;
+  } else if (novelWords.length < 10 || (!isBehavioral && techTermsCount <= 1)) {
+    // Extremely thin / superficial answer
+    correctness = 1.5;
     relevance = 1.5;
     depth = 0.5;
     clarity = 2.0;
@@ -760,16 +1104,16 @@ function performSemanticConceptValidation(question, answer, role, difficulty) {
     problemSolving = 1.5;
   } else {
     // Normal technical answer evaluation
-    const conceptRatio = allConcepts.length > 0 ? (matchedConcepts.length / allConcepts.length) : (novelWords.length / 30);
+    const conceptRatio = allConcepts.length > 0 ? (matchedConcepts.length / allConcepts.length) : (techTermsCount / 8);
 
-    if ((conceptRatio >= 0.5 || matchedConcepts.length >= 3) && novelWords.length >= 25) {
+    if ((conceptRatio >= 0.4 || matchedConcepts.length >= 2) && novelWords.length >= 25 && (!isBehavioral ? techTermsCount >= 3 : behavioralTermsCount >= 2)) {
       // Strong to exceptional answer
       correctness = Math.min(9.5, 6.5 + conceptRatio * 3.0);
       relevance = Math.min(9.5, 7.0 + questionRelevanceRatio * 2.5);
       depth = Math.min(9.0, 6.0 + conceptRatio * 2.5 + (answerWords.length > 60 ? 1.0 : 0));
       problemSolving = Math.min(9.5, 6.5 + conceptRatio * 3.0);
       clarity = 7.5;
-    } else if ((conceptRatio >= 0.25 || matchedConcepts.length >= 1) && novelWords.length >= 15) {
+    } else if ((conceptRatio >= 0.2 || matchedConcepts.length >= 1) && novelWords.length >= 15 && (!isBehavioral ? techTermsCount >= 2 : true)) {
       // Moderate answer
       correctness = Math.min(6.5, 4.5 + conceptRatio * 2.0);
       relevance = Math.min(6.5, 4.5 + questionRelevanceRatio * 2.0);
@@ -879,6 +1223,7 @@ function generateStrongerAnswerTemplate(question, matched, allConcepts) {
 /**
  * Dynamic Adaptive Follow-up Question Generator
  * Generates the next question based on the candidate's previous score and covered topics.
+ * Strictly guarantees that previously covered questions are never repeated.
  */
 export async function generateAdaptiveQuestion({ role, difficulty, interviewType, previousQuestion, previousScore, questionIndex, coveredCategories = [] }) {
   const openai = getAiClient();
@@ -891,13 +1236,13 @@ The interview is currently at question #${questionIndex + 1}.
 
 Previous Question: "${previousQuestion}"
 Candidate's Previous Overall Score: ${previousScore} / 10.0
-Topics already covered: ${coveredCategories.join(', ') || 'None yet'}
+Questions already covered in this session: ${coveredCategories.join(' | ') || 'None yet'}
 
-ADAPTIVE RULE:
+ADAPTIVE RULES:
 - If previous score >= 7.5: Escalate complexity, ask an advanced deep-dive or architectural follow-up.
 - If previous score is 4.0 - 7.4: Ask a clarifying follow-up probing the specific trade-offs or missing aspects of the previous answer.
 - If previous score < 4.0: Pivot to a fundamental concept to verify core knowledge without discouraging the candidate.
-- Never repeat previous questions.
+- NEVER repeat any question that has already been asked in this session!
 
 Return ONLY a valid JSON object:
 {
@@ -924,17 +1269,46 @@ Return ONLY a valid JSON object:
     }
   }
 
-  // Dynamic Repository-Based Adaptive Selector
-  const questions = getQuestionsForRole(role, difficulty, interviewType);
-  // Pick an unused question that matches the adaptive direction
+  // Dynamic Repository-Based Adaptive Selector with STRICT Non-Repetition
+  const coveredSet = new Set((coveredCategories || []).map(q => q.trim().toLowerCase()));
+  if (previousQuestion) coveredSet.add(previousQuestion.trim().toLowerCase());
+
   let targetDiff = difficulty;
   if (previousScore >= 8.0) targetDiff = 'Advanced';
   else if (previousScore < 5.0) targetDiff = 'Beginner';
 
   const roleBank = QUESTION_REPOSITORY[role] || QUESTION_REPOSITORY['Software Engineer'];
-  const candidates = roleBank[targetDiff] || questions;
-  const filtered = candidates.filter(q => q.question !== previousQuestion);
-  const picked = filtered.length > 0 ? filtered[Math.floor(Math.random() * filtered.length)] : questions[0];
+
+  // 1. Try unused questions at target difficulty
+  let pool = (roleBank[targetDiff] || []).filter(q => !coveredSet.has(q.question.trim().toLowerCase()));
+
+  // 2. If target difficulty ran out, check other difficulties of same role
+  if (pool.length === 0) {
+    for (const d of ['Intermediate', 'Beginner', 'Advanced']) {
+      const unused = (roleBank[d] || []).filter(q => !coveredSet.has(q.question.trim().toLowerCase()));
+      if (unused.length > 0) {
+        pool = unused;
+        targetDiff = d;
+        break;
+      }
+    }
+  }
+
+  // 3. If still empty, check related roles (Software Engineer / Full Stack)
+  if (pool.length === 0) {
+    const fallbackBank = QUESTION_REPOSITORY['Software Engineer'];
+    for (const d of ['Intermediate', 'Beginner', 'Advanced']) {
+      const unused = (fallbackBank[d] || []).filter(q => !coveredSet.has(q.question.trim().toLowerCase()));
+      if (unused.length > 0) {
+        pool = unused;
+        targetDiff = d;
+        break;
+      }
+    }
+  }
+
+  const defaultQuestions = getQuestionsForRole(role, difficulty, interviewType);
+  const picked = pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : defaultQuestions[0];
 
   return {
     question: picked.question,
