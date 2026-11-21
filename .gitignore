@@ -12,6 +12,15 @@ data/*.db-wal
 data/*.db-shm
 !data/.gitkeep
 
+# Project Reports and BMC
+INTERVIEWIQ_PROJECT_REPORT_AND_BMC.*
+InterviewIQ_Complete_Project_Report_And_BMC.*
+public/InterviewIQ_Complete_Project_Report_And_BMC.*
+public/report.html
+generate_documents.py
+*.pdf
+*.docx
+
 # IDE and OS
 .claude/
 .vscode/

@@ -2,6 +2,7 @@ import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { createRequire } from 'module';
 import { db } from '../db.js';
+import { generateFreshResumeQuestions } from '../services/ai.js';
 
 const require = createRequire(import.meta.url);
 let pdfModule = null;
@@ -207,8 +208,9 @@ resumeRouter.post('/parse', (req, res) => {
 /**
  * POST /api/resume/generate-interview
  * Creates a tailored interview session based on the candidate's actual resume projects
+ * with dynamic non-repeating questions across attempts
  */
-resumeRouter.post('/generate-interview', (req, res) => {
+resumeRouter.post('/generate-interview', async (req, res) => {
   try {
     const { resumeId, userId = 1 } = req.body;
     let resume = null;
@@ -223,17 +225,21 @@ resumeRouter.post('/generate-interview', (req, res) => {
     const skills = resume ? JSON.parse(resume.extracted_skills || '[]') : ['React', 'Node.js', 'SQL'];
     const projects = resume ? JSON.parse(resume.extracted_projects || '[]') : ['Web Application'];
 
-    const mainSkill = skills[0] || 'Modern Technologies';
-    const secondSkill = skills[1] || 'Databases';
-    const mainProject = projects[0] || 'your core project mentioned on your resume';
+    // Fetch recent questions across past sessions to strictly avoid repetition
+    let recentQuestions = [];
+    try {
+      recentQuestions = db.prepare(`
+        SELECT question_text FROM interview_exchanges 
+        ORDER BY id DESC LIMIT 60
+      `).all().map(r => r.question_text.trim().toLowerCase());
+    } catch (e) {}
 
-    const resumeQuestions = [
-      `I noticed on your resume that you worked on: "${mainProject}". Walk me through the high-level architecture of this system and how you decided to leverage ${mainSkill}.`,
-      `In your project involving ${mainProject}, what was the most difficult technical bottleneck or scalability challenge you encountered, and how did you resolve it?`,
-      `Regarding your experience with ${secondSkill}, how did you ensure data consistency, performance, and error handling under peak load?`,
-      `Tell me about an instance during this project when you had to make a tough trade-off between delivery speed and technical debt. What was the outcome?`,
-      `If you were tasked with re-architecting this system today to support 10x higher throughput, what architectural changes would you make?`
-    ];
+    const resumeQuestions = await generateFreshResumeQuestions({
+      skills,
+      projects,
+      recentQuestions,
+      totalQuestions: 5
+    });
 
     const sessionId = randomUUID();
     const insertSession = db.prepare(`
@@ -263,6 +269,6 @@ resumeRouter.post('/generate-interview', (req, res) => {
     });
   } catch (err) {
     console.error('Error generating resume interview:', err);
-    res.status(500).json({ error: 'Failed to launch resume interview' });
+    res.status(500).json({ error: 'Failed to launch resume interview', details: err.message });
   }
 });

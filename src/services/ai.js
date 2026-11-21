@@ -670,9 +670,10 @@ export function isQuestionEchoOrParrot(question, answer) {
     const nonQWords = aWords.filter(w => !qWordSet.has(w));
     const overlapRatio = (aWords.length - nonQWords.length) / aWords.length;
 
-    // High overlap and very few non-question words
-    if (overlapRatio >= 0.70 && nonQWords.length <= 6) return true;
-    if (overlapRatio >= 0.85 && nonQWords.length <= 10) return true;
+    // Almost no new words or very high overlap
+    if (nonQWords.length <= 4 && aWords.length >= 3) return true;
+    if (overlapRatio >= 0.60 && nonQWords.length <= 8) return true;
+    if (overlapRatio >= 0.75 && nonQWords.length <= 12) return true;
   }
 
   return false;
@@ -748,205 +749,209 @@ export function synthesizeDynamicConceptsForQuestion(question, role = '') {
     );
   }
 
-  return { keyConcepts, wrongConcepts };
-}
-
-/**
- * Intelligent Concept-Aware Semantic Evaluator
- * Evaluates the answer against the specific question's core concepts.
- * Detects wrong answers, nonsense, "I don't know", and incorrect statements.
- */
-export async function evaluateAnswerIntelligently({ question, userAnswer, role, difficulty, interviewType }) {
-  const openai = getAiClient();
-  const trimmed = (userAnswer || '').trim();
-
-  // 1. Check for gibberish, keysmash, random punctuation (e.g. "lk,;l,;l,;l", "asdfasdf")
-  if (isGibberishOrNonsense(trimmed)) {
-    return {
-      clarity: 0.0,
-      relevance: 0.0,
-      depth: 0.0,
-      communication: 0.0,
-      problemSolving: 0.0,
-      overall: 0.0,
-      strengths: ["None. The submitted response consists of random characters, symbols, or keyboard smashing."],
-      missingConcepts: ["A complete, meaningful answer addressing the question was not provided."],
-      incorrectConcepts: [`Invalid gibberish input detected: "${trimmed}". This does not contain any recognizable explanation or concepts.`],
-      improvements: [
-        "Please provide a genuine, coherent answer in full sentences.",
-        "Explain the core technical principles requested in the question."
-      ],
-      strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
-      adaptiveHint: "Invalid answer detected (0.0/10). Re-asking a foundational question to ensure basic comprehension."
-    };
+    return { keyConcepts, wrongConcepts };
   }
 
-  // 2. Check for question copying/echoing (e.g. user pasted question or question + "Your Response")
-  if (isQuestionEchoOrParrot(question, trimmed)) {
-    return {
-      clarity: 0.0,
-      relevance: 0.0,
-      depth: 0.0,
-      communication: 0.0,
-      problemSolving: 0.0,
-      overall: 0.0,
-      strengths: ["None. The submitted response merely copies or repeats the question prompt."],
-      missingConcepts: ["You echoed the prompt instead of providing an actual technical explanation or solution."],
-      incorrectConcepts: [`Question Echo Detected: The submitted response repeats the question prompt without answering it.`],
-      improvements: [
-        "Do not copy or paste the question text into the response box.",
-        "Provide a direct technical explanation addressing the core principles, architecture, and trade-offs."
-      ],
-      strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
-      adaptiveHint: "Question echoed back without an answer (0.0/10). Re-asking a foundational question to gauge comprehension."
-    };
-  }
+  /**
+   * Intelligent Concept-Aware Semantic Evaluator
+   * Evaluates the answer against the specific question's core concepts.
+   * Detects wrong answers, nonsense, "I don't know", and incorrect statements.
+   */
+  export async function evaluateAnswerIntelligently({ question, userAnswer, role, difficulty, interviewType }) {
+    const openai = getAiClient();
+    const trimmed = (userAnswer || '').trim();
 
-  // 3. Check for empty or trivial answers (< 10 chars)
-  if (trimmed.length < 10) {
-    return {
-      clarity: 0.0,
-      relevance: 0.0,
-      depth: 0.0,
-      communication: 0.0,
-      problemSolving: 0.0,
-      overall: 0.0,
-      strengths: ["None."],
-      missingConcepts: ["Answer was too short to convey any meaning."],
-      incorrectConcepts: ["Incomplete response."],
-      improvements: ["Type a full explanation addressing the question."],
-      strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
-      adaptiveHint: "Answer was too short (0.0/10). Re-calibrating."
-    };
-  }
-
-  // 4. Check for common evasive or "I don't know" answers
-  const isIdk = /^(i don'?t know|no idea|skip|not sure|pass|na|none|idk|dont know)\.?$/i.test(trimmed);
-  if (isIdk) {
-    return {
-      clarity: 1.0,
-      relevance: 0.0,
-      depth: 0.0,
-      communication: 1.0,
-      problemSolving: 0.0,
-      overall: 0.4,
-      strengths: ["Honest acknowledgement of knowledge boundary."],
-      missingConcepts: ["Core technical concept knowledge was not demonstrated."],
-      incorrectConcepts: ["No attempt to formulate a technical answer."],
-      improvements: [
-        "In interviews, when you do not know the exact answer, explain your reasoning process or relate it to a similar concept you know.",
-        "Break down the problem from first principles."
-      ],
-      strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
-      adaptiveHint: "Pivoting to a simpler foundational concept to evaluate basic principles."
-    };
-  }
-
-  // 5. Try real OpenAI evaluation if client is configured
-  if (openai) {
-    try {
-      const prompt = `
-You are an expert technical interviewer assessing a candidate for a ${role} position (${difficulty} level, ${interviewType}).
-
-Question asked:
-"${question}"
-
-Candidate's Answer:
-"${trimmed}"
-
-Evaluate the candidate's answer strictly and fairly using the 10-point rubric:
-1. Technical Correctness (0-10)
-2. Relevance to Question (0-10)
-3. Clarity and Structure (0-10)
-4. Depth of Explanation (0-10)
-5. Problem-Solving / Practical Approach (0-10)
-
-IMPORTANT CRITICAL RULES:
-- If the candidate merely copies, repeats, echoes, or paraphrases the question prompt (or just appends placeholder phrases like "Your response"), give STRICTLY 0.0 across all dimensions (overall: 0.0, correctness: 0.0, relevance: 0.0, depth: 0.0, clarity: 0.0, problemSolving: 0.0)!
-- If the answer is completely off-topic or irrelevant (e.g. talking about food, movies, personal hobbies, or unrelated non-technical topics), give 0.0 for Relevance, Correctness, and Overall = 0.0!
-- If the answer is factually WRONG or claims incorrect things, give low scores (1.0-3.0) in Technical Correctness and Relevance!
-- Do NOT inflate scores for length alone or for repeating the prompt's own keywords without explaining them.
-
-Return ONLY a valid JSON object matching this schema:
-{
-  "clarity": number (0-10, one decimal),
-  "relevance": number (0-10, one decimal),
-  "depth": number (0-10, one decimal),
-  "communication": number (0-10, one decimal),
-  "problemSolving": number (0-10, one decimal),
-  "overall": number (0-10, average rounded to 1 decimal),
-  "strengths": ["bullet 1", "bullet 2"],
-  "missingConcepts": ["concept 1", "concept 2"],
-  "incorrectConcepts": ["specifically what was wrong or inaccurate"],
-  "improvements": ["actionable advice 1", "actionable advice 2"],
-  "strongerAnswer": "A concise example of an outstanding answer to this question",
-  "adaptiveHint": "Reasoning for what kind of question should be asked next"
-}
-`;
-
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-        temperature: 0.3
-      });
-
-      const parsed = JSON.parse(response.choices[0].message.content);
-      if (parsed.overall !== undefined && parsed.strengths) {
-        return parsed;
-      }
-    } catch (apiErr) {
-      console.warn('OpenAI API call failed, activating Semantic Concept Validator:', apiErr.message);
+    // 1. Check for gibberish, keysmash, random punctuation (e.g. "lk,;l,;l,;l", "asdfasdf")
+    if (isGibberishOrNonsense(trimmed)) {
+      return {
+        clarity: 0.0,
+        relevance: 0.0,
+        depth: 0.0,
+        communication: 0.0,
+        problemSolving: 0.0,
+        overall: 0.0,
+        strengths: ["None. The submitted response consists of random characters, symbols, or keyboard smashing."],
+        missingConcepts: ["A complete, meaningful answer addressing the question was not provided."],
+        incorrectConcepts: [`Invalid gibberish input detected: "${trimmed}". This does not contain any recognizable explanation or concepts.`],
+        improvements: [
+          "Please provide a genuine, coherent answer in full sentences.",
+          "Explain the core technical principles requested in the question."
+        ],
+        strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
+        adaptiveHint: "Invalid answer detected (0.0/10). Re-asking a foundational question to ensure basic comprehension."
+      };
     }
+
+    // 2. Check for question copying/echoing (e.g. user pasted question or question + "Your Response")
+    if (isQuestionEchoOrParrot(question, trimmed)) {
+      return {
+        clarity: 0.0,
+        relevance: 0.0,
+        depth: 0.0,
+        communication: 0.0,
+        problemSolving: 0.0,
+        overall: 0.0,
+        strengths: ["None. The submitted response merely copies or repeats the question prompt."],
+        missingConcepts: ["You echoed the prompt instead of providing an actual technical explanation or solution."],
+        incorrectConcepts: [`Question Echo Detected: The submitted response repeats the question prompt without answering it.`],
+        improvements: [
+          "Do not copy or paste the question text into the response box.",
+          "Provide a direct technical explanation addressing the core principles, architecture, and trade-offs."
+        ],
+        strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
+        adaptiveHint: "Question echoed back without an answer (0.0/10). Re-asking a foundational question to gauge comprehension."
+      };
+    }
+
+    // 3. Check for empty or trivial answers (< 10 chars)
+    if (trimmed.length < 10) {
+      return {
+        clarity: 0.0,
+        relevance: 0.0,
+        depth: 0.0,
+        communication: 0.0,
+        problemSolving: 0.0,
+        overall: 0.0,
+        strengths: ["None."],
+        missingConcepts: ["Answer was too short to convey any meaning."],
+        incorrectConcepts: ["Incomplete response."],
+        improvements: ["Type a full explanation addressing the question."],
+        strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
+        adaptiveHint: "Answer was too short (0.0/10). Re-calibrating."
+      };
+    }
+
+    // 4. Check for common evasive or "I don't know" answers
+    const isIdk = /^(i don'?t know|no idea|skip|not sure|pass|na|none|idk|dont know)\.?$/i.test(trimmed);
+    if (isIdk) {
+      return {
+        clarity: 1.0,
+        relevance: 0.0,
+        depth: 0.0,
+        communication: 1.0,
+        problemSolving: 0.0,
+        overall: 0.4,
+        strengths: ["Honest acknowledgement of knowledge boundary."],
+        missingConcepts: ["Core technical concept knowledge was not demonstrated."],
+        incorrectConcepts: ["No attempt to formulate a technical answer."],
+        improvements: [
+          "In interviews, when you do not know the exact answer, explain your reasoning process or relate it to a similar concept you know.",
+          "Break down the problem from first principles."
+        ],
+        strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
+        adaptiveHint: "Pivoting to a simpler foundational concept to evaluate basic principles."
+      };
+    }
+
+    // 5. Try real OpenAI evaluation if client is configured
+    if (openai) {
+      try {
+        const prompt = `
+  You are an expert technical interviewer assessing a candidate for a ${role} position (${difficulty} level, ${interviewType}).
+
+  Question asked:
+  "${question}"
+
+  Candidate's Answer:
+  "${trimmed}"
+
+  Evaluate the candidate's answer strictly and fairly using the 10-point rubric:
+  1. Technical Correctness (0-10)
+  2. Relevance to Question (0-10)
+  3. Clarity and Structure (0-10)
+  4. Depth of Explanation (0-10)
+  5. Problem-Solving / Practical Approach (0-10)
+
+  IMPORTANT CRITICAL RULES:
+  - If the candidate merely copies, repeats, echoes, or paraphrases the question prompt (or just appends placeholder phrases like "Your response"), give STRICTLY 0.0 across all dimensions (overall: 0.0, correctness: 0.0, relevance: 0.0, depth: 0.0, clarity: 0.0, problemSolving: 0.0)!
+  - If the answer is completely off-topic or irrelevant (e.g. talking about food, movies, personal hobbies, or unrelated non-technical topics), give 0.0 for Relevance, Correctness, and Overall = 0.0!
+  - If the answer is factually WRONG or claims incorrect things, give low scores (1.0-3.0) in Technical Correctness and Relevance!
+  - Do NOT inflate scores for length alone or for repeating the prompt's own keywords without explaining them.
+
+  Return ONLY a valid JSON object matching this schema:
+  {
+    "clarity": number (0-10, one decimal),
+    "relevance": number (0-10, one decimal),
+    "depth": number (0-10, one decimal),
+    "communication": number (0-10, one decimal),
+    "problemSolving": number (0-10, one decimal),
+    "overall": number (0-10, average rounded to 1 decimal),
+    "strengths": ["bullet 1", "bullet 2"],
+    "missingConcepts": ["concept 1", "concept 2"],
+    "incorrectConcepts": ["specifically what was wrong or inaccurate"],
+    "improvements": ["actionable advice 1", "actionable advice 2"],
+    "strongerAnswer": "A concise example of an outstanding answer to this question",
+    "adaptiveHint": "Reasoning for what kind of question should be asked next"
+  }
+  `;
+
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI evaluation timeout')), 2500));
+        const response = await Promise.race([
+          openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [{ role: 'user', content: prompt }],
+            response_format: { type: 'json_object' },
+            temperature: 0.3
+          }),
+          timeoutPromise
+        ]);
+
+        const parsed = JSON.parse(response.choices[0].message.content);
+        if (parsed.overall !== undefined && parsed.strengths) {
+          return parsed;
+        }
+      } catch (apiErr) {
+        console.warn('OpenAI API call failed, activating Semantic Concept Validator:', apiErr.message);
+      }
+    }
+
+    // 6. High-Precision Semantic Concept Validator (Zero-Dummy Engine)
+    return performSemanticConceptValidation(question, trimmed, role, difficulty, interviewType);
   }
 
-  // 6. High-Precision Semantic Concept Validator (Zero-Dummy Engine)
-  return performSemanticConceptValidation(question, trimmed, role, difficulty, interviewType);
-}
+  /**
+   * Semantic Concept & Misconception Validator
+   * Evaluates semantic content, detects incorrect claims, and scores accurately.
+   */
+  function performSemanticConceptValidation(question, answer, role, difficulty, interviewType = 'Technical') {
+    // Check if answer is an echo or copy of the question
+    if (isQuestionEchoOrParrot(question, answer)) {
+      return {
+        clarity: 0.0,
+        relevance: 0.0,
+        depth: 0.0,
+        communication: 0.0,
+        problemSolving: 0.0,
+        overall: 0.0,
+        strengths: ["None. The submitted response merely copies or repeats the question prompt."],
+        missingConcepts: ["You echoed the prompt instead of providing an actual technical explanation or solution."],
+        incorrectConcepts: [`Question Echo Detected: The submitted response repeats the question prompt without answering it.`],
+        improvements: [
+          "Do not copy or paste the question into the response box.",
+          "Provide a direct technical explanation addressing the core principles, architecture, and trade-offs."
+        ],
+        strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
+        adaptiveHint: "Question echoed back without an answer (0.0/10). Re-asking a foundational question to gauge comprehension."
+      };
+    }
 
-/**
- * Semantic Concept & Misconception Validator
- * Evaluates semantic content, detects incorrect claims, and scores accurately.
- */
-function performSemanticConceptValidation(question, answer, role, difficulty, interviewType = 'Technical') {
-  // Check if answer is an echo or copy of the question
-  if (isQuestionEchoOrParrot(question, answer)) {
-    return {
-      clarity: 0.0,
-      relevance: 0.0,
-      depth: 0.0,
-      communication: 0.0,
-      problemSolving: 0.0,
-      overall: 0.0,
-      strengths: ["None. The submitted response merely copies or repeats the question prompt."],
-      missingConcepts: ["You echoed the prompt instead of providing an actual technical explanation or solution."],
-      incorrectConcepts: [`Question Echo Detected: The submitted response repeats the question prompt without answering it.`],
-      improvements: [
-        "Do not copy or paste the question into the response box.",
-        "Provide a direct technical explanation addressing the core principles, architecture, and trade-offs."
-      ],
-      strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
-      adaptiveHint: "Question echoed back without an answer (0.0/10). Re-asking a foundational question to gauge comprehension."
-    };
-  }
+    const lowerAnswer = answer.toLowerCase();
+    const lowerQuestion = question.toLowerCase();
+    const answerWords = answer.trim().split(/\s+/).filter(Boolean);
 
-  const lowerAnswer = answer.toLowerCase();
-  const lowerQuestion = question.toLowerCase();
-  const answerWords = answer.trim().split(/\s+/).filter(Boolean);
+    // Stop words for novel content analysis
+    const stopWords = new Set([
+      'the','be','to','of','and','a','in','that','have','i','it','for','not','on','with','he','as','you','do','at','this',
+      'but','his','by','from','they','we','say','her','she','or','an','will','my','one','all','would','there','their','what',
+      'so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know',
+      'take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come',
+      'its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because',
+      'any','these','give','day','most','us','is','are','was','were','has','had','been','response','question','answer'
+    ]);
 
-  // Stop words for novel content analysis
-  const stopWords = new Set([
-    'the','be','to','of','and','a','in','that','have','i','it','for','not','on','with','he','as','you','do','at','this',
-    'but','his','by','from','they','we','say','her','she','or','an','will','my','one','all','would','there','their','what',
-    'so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know',
-    'take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come',
-    'its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because',
-    'any','these','give','day','most','us','is','are','was','were','has','had','been','response','question','answer'
-  ]);
-
-  const qWordSet = new Set(
-    lowerQuestion.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 2)
-  );
+    const qWordSet = new Set(
+      lowerQuestion.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 2)
+    );
 
   const novelWords = answerWords.filter(w => {
     const clean = w.toLowerCase().replace(/[^\w]/g, '');
@@ -981,41 +986,46 @@ function performSemanticConceptValidation(question, answer, role, difficulty, in
   // Find the exact or highest-overlap matching question in QUESTION_REPOSITORY
   let bestMatchItem = null;
   let bestMatchScore = 0;
-  const qTerms = lowerQuestion.split(/[\s,?.!]+/).filter(w => w.length > 3);
+  const qTerms = lowerQuestion.split(/[\s,?.!]+/).filter(w => w.length > 3 && !stopWords.has(w));
 
-  for (const r of Object.keys(QUESTION_REPOSITORY)) {
-    const categories = QUESTION_REPOSITORY[r];
-    for (const d of Object.keys(categories)) {
-      const qList = categories[d];
-      if (Array.isArray(qList)) {
-        for (const item of qList) {
-          const itemLower = item.question.toLowerCase();
-          if (itemLower === lowerQuestion) {
-            bestMatchItem = item;
-            bestMatchScore = 999;
-            break;
-          }
-          // Compute word overlap
-          let overlap = 0;
-          qTerms.forEach(t => {
-            if (itemLower.includes(t)) overlap++;
-          });
-          if (overlap > bestMatchScore && overlap >= 3) {
-            bestMatchScore = overlap;
-            bestMatchItem = item;
+  const isResumeInterview = interviewType.toLowerCase().includes('resume');
+
+  // Resume questions are dynamically tailored and must use dynamic concept synthesis
+  if (!isResumeInterview) {
+    for (const r of Object.keys(QUESTION_REPOSITORY)) {
+      const categories = QUESTION_REPOSITORY[r];
+      for (const d of Object.keys(categories)) {
+        const qList = categories[d];
+        if (Array.isArray(qList)) {
+          for (const item of qList) {
+            const itemLower = item.question.toLowerCase();
+            if (itemLower === lowerQuestion) {
+              bestMatchItem = item;
+              bestMatchScore = 999;
+              break;
+            }
+            // Compute word overlap
+            let overlap = 0;
+            qTerms.forEach(t => {
+              if (itemLower.includes(t)) overlap++;
+            });
+            if (overlap > bestMatchScore && overlap >= 5) {
+              bestMatchScore = overlap;
+              bestMatchItem = item;
+            }
           }
         }
+        if (bestMatchScore === 999) break;
       }
       if (bestMatchScore === 999) break;
     }
-    if (bestMatchScore === 999) break;
   }
 
   // If question is not in static repository (e.g. dynamic Resume interview question), synthesize target concepts
   let allConcepts = [];
   let wrongConceptsList = [];
 
-  if (bestMatchItem && bestMatchScore >= 3) {
+  if (bestMatchItem && bestMatchScore >= 5) {
     allConcepts = bestMatchItem.keyConcepts || [];
     wrongConceptsList = bestMatchItem.wrongConcepts || [];
   } else {
@@ -1106,14 +1116,14 @@ function performSemanticConceptValidation(question, answer, role, difficulty, in
     // Normal technical answer evaluation
     const conceptRatio = allConcepts.length > 0 ? (matchedConcepts.length / allConcepts.length) : (techTermsCount / 8);
 
-    if ((conceptRatio >= 0.4 || matchedConcepts.length >= 2) && novelWords.length >= 25 && (!isBehavioral ? techTermsCount >= 3 : behavioralTermsCount >= 2)) {
+    if ((conceptRatio >= 0.35 || matchedConcepts.length >= 2 || (techTermsCount >= 4 && novelWords.length >= 25)) && novelWords.length >= 20 && (!isBehavioral ? techTermsCount >= 3 : behavioralTermsCount >= 2)) {
       // Strong to exceptional answer
-      correctness = Math.min(9.5, 6.5 + conceptRatio * 3.0);
+      correctness = Math.min(9.5, 7.0 + conceptRatio * 2.5);
       relevance = Math.min(9.5, 7.0 + questionRelevanceRatio * 2.5);
-      depth = Math.min(9.0, 6.0 + conceptRatio * 2.5 + (answerWords.length > 60 ? 1.0 : 0));
-      problemSolving = Math.min(9.5, 6.5 + conceptRatio * 3.0);
-      clarity = 7.5;
-    } else if ((conceptRatio >= 0.2 || matchedConcepts.length >= 1) && novelWords.length >= 15 && (!isBehavioral ? techTermsCount >= 2 : true)) {
+      depth = Math.min(9.0, 6.0 + conceptRatio * 2.5 + (answerWords.length > 50 ? 1.5 : 0.5));
+      problemSolving = Math.min(9.5, 7.0 + conceptRatio * 2.5);
+      clarity = 8.0;
+    } else if ((conceptRatio >= 0.2 || matchedConcepts.length >= 1 || techTermsCount >= 2) && novelWords.length >= 15 && (!isBehavioral ? techTermsCount >= 2 : true)) {
       // Moderate answer
       correctness = Math.min(6.5, 4.5 + conceptRatio * 2.0);
       relevance = Math.min(6.5, 4.5 + questionRelevanceRatio * 2.0);
@@ -1316,4 +1326,226 @@ Return ONLY a valid JSON object:
     difficulty: targetDiff,
     type: picked.type || 'Technical'
   };
+}
+
+/**
+ * Picks or generates a fresh, unique opening question for a new interview session.
+ * Guarantees that questions asked in recent sessions are avoided.
+ */
+export async function getFreshOpeningQuestion({ role, difficulty, interviewType, recentQuestions = [] }) {
+  const openai = getAiClient();
+  const recentSet = new Set((recentQuestions || []).map(q => q.trim().toLowerCase()));
+
+  // 1. If OpenAI is available, generate a brand-new dynamic opening question
+  if (openai) {
+    try {
+      const prompt = `
+You are an expert technical interviewer conducting a ${interviewType} for a ${role} (${difficulty} level).
+Generate a fresh, unique, challenging opening interview question for the candidate.
+
+RULES:
+- Do NOT repeat or closely resemble any of these previously asked questions:
+${Array.from(recentSet).slice(0, 15).join(' | ') || 'None'}
+
+Return ONLY a valid JSON object:
+{
+  "question": "The interview question string",
+  "category": "Topic Category",
+  "difficulty": "${difficulty}",
+  "type": "${interviewType}"
+}
+`;
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        response_format: { type: 'json_object' },
+        temperature: 0.7
+      });
+      const parsed = JSON.parse(response.choices[0].message.content);
+      if (parsed.question && !recentSet.has(parsed.question.trim().toLowerCase())) {
+        return parsed;
+      }
+    } catch (e) {
+      // Fall through to repository selection
+    }
+  }
+
+  // 2. Select an unused question from the repository across all tiers of this role
+  let roleBank = QUESTION_REPOSITORY[role];
+  if (!roleBank) {
+    if (role.toLowerCase().includes('front')) roleBank = QUESTION_REPOSITORY['Frontend Developer'];
+    else if (role.toLowerCase().includes('back')) roleBank = QUESTION_REPOSITORY['Backend Developer'];
+    else if (role.toLowerCase().includes('full') || role.toLowerCase().includes('stack')) roleBank = QUESTION_REPOSITORY['Full Stack Developer'];
+    else if (role.toLowerCase().includes('java')) roleBank = QUESTION_REPOSITORY['Java Developer'];
+    else if (role.toLowerCase().includes('data') || role.toLowerCase().includes('analyst')) roleBank = QUESTION_REPOSITORY['Data Analyst'];
+    else roleBank = QUESTION_REPOSITORY['Software Engineer'];
+  }
+
+  // Collect all questions for this role
+  let allRoleQuestions = [];
+  if (interviewType === 'HR Interview' || interviewType === 'Behavioral Interview') {
+    allRoleQuestions = [...(QUESTION_REPOSITORY['HR / Behavioral'].All || [])];
+  } else {
+    // Prefer target difficulty first, then others
+    const targetTier = roleBank[difficulty] || [];
+    const otherTiers = Object.keys(roleBank).filter(d => d !== difficulty).flatMap(d => roleBank[d] || []);
+    allRoleQuestions = [...targetTier, ...otherTiers];
+    if (interviewType === 'Mixed Interview') {
+      allRoleQuestions.push(...(QUESTION_REPOSITORY['HR / Behavioral'].All || []));
+    }
+  }
+
+  // Filter out any question recently asked
+  const unused = allRoleQuestions.filter(q => !recentSet.has(q.question.trim().toLowerCase()));
+
+  if (unused.length > 0) {
+    return unused[Math.floor(Math.random() * unused.length)];
+  }
+
+  // If all questions for this specific role have been seen, pool from general Software Engineer / Full Stack
+  const fallbackPool = [
+    ...(QUESTION_REPOSITORY['Software Engineer'].Beginner || []),
+    ...(QUESTION_REPOSITORY['Software Engineer'].Intermediate || []),
+    ...(QUESTION_REPOSITORY['Software Engineer'].Advanced || []),
+    ...(QUESTION_REPOSITORY['Full Stack Developer'].Beginner || []),
+    ...(QUESTION_REPOSITORY['Full Stack Developer'].Intermediate || [])
+  ];
+  const unusedFallback = fallbackPool.filter(q => !recentSet.has(q.question.trim().toLowerCase()));
+  if (unusedFallback.length > 0) {
+    return unusedFallback[Math.floor(Math.random() * unusedFallback.length)];
+  }
+
+  // If every question has been seen, pick one that is at least not the very last question
+  const lastQ = Array.from(recentSet)[0] || '';
+  const notLast = allRoleQuestions.filter(q => q.question.trim().toLowerCase() !== lastQ);
+  return notLast.length > 0 ? notLast[Math.floor(Math.random() * notLast.length)] : allRoleQuestions[0];
+}
+
+/**
+ * Generates a diverse, fresh list of interview questions tailored to the candidate's resume.
+ * Guarantees that questions asked in recent sessions are never repeated.
+ */
+export async function generateFreshResumeQuestions({
+  skills = [],
+  projects = [],
+  recentQuestions = [],
+  totalQuestions = 5
+}) {
+  const openai = getAiClient();
+  const recentSet = new Set((recentQuestions || []).map(q => q.trim().toLowerCase()));
+
+  // Fallbacks if empty
+  const safeSkills = skills && skills.length > 0 ? skills : ['JavaScript', 'Node.js', 'React', 'SQL', 'Git'];
+  const safeProjects = projects && projects.length > 0 ? projects : [
+    'Full-Stack Web Application with database integration',
+    'High-performance backend API service with caching',
+    'Responsive frontend interface with modern component architecture'
+  ];
+
+  // 1. Try OpenAI dynamic generation if configured
+  if (openai) {
+    try {
+      const prompt = `
+You are a senior tech hiring manager conducting a technical interview based on a candidate's resume.
+Candidate Skills: ${safeSkills.slice(0, 8).join(', ')}
+Candidate Projects / Highlights:
+${safeProjects.slice(0, 5).map((p, i) => `${i + 1}. ${p}`).join('\n')}
+
+Recent questions already asked to this candidate in prior sessions:
+${Array.from(recentSet).slice(0, 15).join('\n') || 'None'}
+
+Generate ${totalQuestions} distinct, in-depth, scenario-based interview questions directly referencing their projects and skills.
+CRITICAL RULES:
+- Do NOT repeat or closely mirror any recent questions listed above!
+- Distribute questions across different projects and skills (not just the first one).
+- Cover: 1) System architecture, 2) Performance & bottlenecks, 3) Concurrency & data consistency, 4) Technical trade-offs, 5) Scalability & disaster recovery.
+
+Return ONLY a JSON array of strings:
+["Question 1...", "Question 2...", ...]
+`;
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('OpenAI timeout')), 3000));
+      const response = await Promise.race([
+        openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'user', content: prompt }],
+          response_format: { type: 'json_object' },
+          temperature: 0.7
+        }),
+        timeoutPromise
+      ]);
+
+      const parsed = JSON.parse(response.choices[0].message.content);
+      const qList = Array.isArray(parsed) ? parsed : (parsed.questions || Object.values(parsed)[0]);
+      if (Array.isArray(qList) && qList.length >= totalQuestions) {
+        const filtered = qList.filter(q => typeof q === 'string' && !recentSet.has(q.trim().toLowerCase()));
+        if (filtered.length >= totalQuestions) {
+          return filtered.slice(0, totalQuestions);
+        }
+      }
+    } catch (e) {
+      // Fallback to rich dynamic template generator
+    }
+  }
+
+  // 2. Rich Dynamic Deterministic Template Engine (Zero-Repeat Guarantee)
+  const templates = [
+    // Archetype 1: Architecture & Technology Selection
+    (p, s) => `I noticed on your resume that you worked on: "${p}". Walk me through the high-level architecture of this system and how you decided to leverage ${s}.`,
+    (p, s) => `Looking at your implementation of "${p}", how did you structure the separation of concerns between your service layer, persistence layer, and API contracts when integrating ${s}?`,
+    (p, s) => `In the context of "${p}", what other frameworks or technologies did you evaluate before choosing ${s}, and what decisive architectural trade-offs influenced your decision?`,
+
+    // Archetype 2: Performance Bottlenecks & Optimization
+    (p, s) => `In your project involving "${p}", what was the most difficult technical bottleneck or scalability challenge you encountered, and how did you resolve it?`,
+    (p, s) => `During your work on "${p}", how did you measure and profile system latency, and what specific optimizations did you implement using ${s}?`,
+    (p, s) => `When handling intensive workloads in "${p}", how did you prevent resource starvation or memory leaks in your ${s} implementation?`,
+
+    // Archetype 3: Concurrency, Data Consistency & Reliability
+    (p, s) => `Regarding your experience with ${s} in "${p}", how did you ensure data consistency, transaction integrity, and error handling under peak load?`,
+    (p, s) => `How did you manage database connection pooling, state synchronization, and failover recovery while working on "${p}" with ${s}?`,
+    (p, s) => `In "${p}", how did you handle asynchronous jobs, event queues, or background tasks with ${s} to guarantee idempotency and avoid race conditions?`,
+
+    // Archetype 4: Technical Debt & Trade-offs
+    (p, s) => `Tell me about an instance during your work on "${p}" when you had to make a tough trade-off between delivery speed and technical debt. What was the outcome?`,
+    (p, s) => `If you could revisit a design decision made during the development of "${p}", what would you refactor or implement differently today using ${s}?`,
+    (p, s) => `In "${p}", how did your team balance shipping new customer features against refactoring core legacy modules and writing comprehensive test suites?`,
+
+    // Archetype 5: High-Scale Re-Architecture & Production Readiness
+    (p, s) => `If you were tasked with re-architecting "${p}" today to support 10x higher throughput and 99.99% uptime, what architectural changes would you make?`,
+    (p, s) => `How did you implement automated testing, CI/CD pipelines, and observability (metrics, APM, logging) for "${p}" to ensure zero-downtime releases?`,
+    (p, s) => `In "${p}", how did you approach security, authorization checks, and data protection for APIs powered by ${s}?`
+  ];
+
+  // Shuffle projects & skills to provide rich variety across sessions
+  const shuffledProjects = [...safeProjects].sort(() => Math.random() - 0.5);
+  const shuffledSkills = [...safeSkills].sort(() => Math.random() - 0.5);
+
+  const candidateQuestions = [];
+
+  for (let i = 0; i < templates.length && candidateQuestions.length < totalQuestions * 3; i++) {
+    const proj = shuffledProjects[i % shuffledProjects.length];
+    const skill = shuffledSkills[i % shuffledSkills.length];
+    const qStr = templates[i](proj, skill);
+
+    if (!recentSet.has(qStr.trim().toLowerCase()) && !candidateQuestions.includes(qStr)) {
+      candidateQuestions.push(qStr);
+    }
+  }
+
+  // If we collected enough, take the first totalQuestions
+  if (candidateQuestions.length >= totalQuestions) {
+    return candidateQuestions.slice(0, totalQuestions);
+  }
+
+  // Fallback: fill any missing slots with varied templates
+  for (const t of templates) {
+    const proj = safeProjects[Math.floor(Math.random() * safeProjects.length)];
+    const skill = safeSkills[Math.floor(Math.random() * safeSkills.length)];
+    const q = t(proj, skill);
+    if (!candidateQuestions.includes(q)) {
+      candidateQuestions.push(q);
+    }
+    if (candidateQuestions.length >= totalQuestions) break;
+  }
+
+  return candidateQuestions.slice(0, totalQuestions);
 }

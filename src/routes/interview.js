@@ -1,7 +1,7 @@
 import express from 'express';
 import { randomUUID } from 'node:crypto';
 import { db } from '../db.js';
-import { getQuestionsForRole, evaluateAnswerIntelligently, generateAdaptiveQuestion } from '../services/ai.js';
+import { getQuestionsForRole, evaluateAnswerIntelligently, generateAdaptiveQuestion, getFreshOpeningQuestion } from '../services/ai.js';
 
 export const interviewRouter = express.Router();
 
@@ -32,32 +32,22 @@ interviewRouter.post('/start', async (req, res) => {
     `);
     insertSession.run(sessionId, userId, role, interviewType, difficulty, durationMinutes, totalQuestions);
 
-    // Pick opening question - avoid questions asked in recent sessions
-    const questions = getQuestionsForRole(role, difficulty, interviewType);
-    let firstQ = null;
+    // Fetch recent questions across past sessions to strictly avoid repetition
+    let recentQuestions = [];
     try {
-      const recentQuestions = db.prepare(`
+      recentQuestions = db.prepare(`
         SELECT question_text FROM interview_exchanges 
-        WHERE session_id IN (SELECT id FROM interview_sessions WHERE user_id = ?)
-        ORDER BY id DESC LIMIT 25
-      `).all(userId).map(r => r.question_text.trim().toLowerCase());
+        ORDER BY id DESC LIMIT 50
+      `).all().map(r => r.question_text.trim().toLowerCase());
+    } catch (e) {}
 
-      const recentSet = new Set(recentQuestions);
-      const unusedQuestions = questions.filter(q => !recentSet.has(q.question.trim().toLowerCase()));
-      const candidatePool = unusedQuestions.length > 0 ? unusedQuestions : questions;
-      firstQ = candidatePool[Math.floor(Math.random() * candidatePool.length)];
-    } catch (e) {
-      firstQ = questions[Math.floor(Math.random() * questions.length)];
-    }
-
-    if (!firstQ) {
-      firstQ = {
-        question: `Walk me through your engineering experience and how you approach complex problem-solving in a ${role} role.`,
-        category: 'Overview',
-        difficulty: difficulty,
-        type: interviewType
-      };
-    }
+    // Pick or generate a fresh opening question that has not been recently asked
+    const firstQ = await getFreshOpeningQuestion({
+      role,
+      difficulty,
+      interviewType,
+      recentQuestions
+    });
 
     // Insert first exchange record
     const insertExchange = db.prepare(`
