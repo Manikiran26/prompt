@@ -1327,7 +1327,8 @@
       const qNumBadge = document.getElementById('feedbackQNum');
       if (score === 0) {
         qNumBadge.className = 'tag danger';
-        qNumBadge.textContent = 'Invalid / Gibberish Input (0.0/10)';
+        const isEcho = (ev.incorrectConcepts || []).some(ic => ic.toLowerCase().includes('echo') || ic.toLowerCase().includes('repeat') || ic.toLowerCase().includes('copies') || ic.toLowerCase().includes('prompt'));
+        qNumBadge.textContent = isEcho ? 'Question Repeated as Answer (0.0/10)' : 'Invalid / Gibberish Input (0.0/10)';
         document.getElementById('overallScore').style.color = 'var(--danger)';
         document.getElementById('scoreCircleValue').style.color = 'var(--danger)';
       } else if (score < 4.0) {
@@ -1342,15 +1343,15 @@
         document.getElementById('scoreCircleValue').style.color = 'var(--accent-strong)';
       }
 
-      // Rubric grid (5 dimensions)
+      // Rubric grid (5 dimensions) - strict nullish checks to ensure 0.0 is never replaced with 5
       const rubricGrid = document.getElementById('rubricGrid');
       rubricGrid.innerHTML = '';
       const dimensions = [
-        { label: 'Technical Correctness', val: ev.problemSolving || ev.correctness || 5 },
-        { label: 'Relevance', val: ev.relevance || 5 },
-        { label: 'Clarity', val: ev.clarity || 5 },
-        { label: 'Depth of Explanation', val: ev.depth || 5 },
-        { label: 'Communication Tone', val: ev.communication || 5 }
+        { label: 'Technical Correctness', val: ev.correctness !== undefined ? ev.correctness : (ev.problemSolving !== undefined ? ev.problemSolving : 0) },
+        { label: 'Relevance', val: ev.relevance !== undefined ? ev.relevance : 0 },
+        { label: 'Clarity', val: ev.clarity !== undefined ? ev.clarity : 0 },
+        { label: 'Depth of Explanation', val: ev.depth !== undefined ? ev.depth : 0 },
+        { label: 'Communication Tone', val: ev.communication !== undefined ? ev.communication : 0 }
       ];
 
       dimensions.forEach(dim => {

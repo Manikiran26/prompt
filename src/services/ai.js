@@ -390,6 +390,59 @@ function isGibberishOrNonsense(text) {
 }
 
 /**
+ * Detects if the user simply copied/pasted the question (or question + UI text)
+ * without providing an actual substantive answer.
+ */
+export function isQuestionEchoOrParrot(question, answer) {
+  const rawQ = (question || '').trim().toLowerCase();
+  const rawA = (answer || '').trim().toLowerCase();
+  if (!rawQ || !rawA) return false;
+
+  const normalize = (str) =>
+    (str || '')
+      .toLowerCase()
+      .replace(/\b(your response|my response|question \d+|answer|response|q\d+|q:?|a:?)\b/gi, '')
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const normQ = normalize(rawQ);
+  const normA = normalize(rawA);
+
+  if (!normA) return true;
+  if (normQ === normA) return true;
+
+  // 1. Answer contains the entire normalized question
+  if (normA.includes(normQ)) {
+    const remainder = normA.replace(normQ, '').trim();
+    const remWords = remainder.split(/\s+/).filter(Boolean);
+    // If the non-question part is 8 words or fewer, it's just an echo with UI/filler words
+    if (remWords.length <= 8) return true;
+  }
+
+  // 2. Question contains the entire normalized answer (user copied part of the question)
+  if (normQ.includes(normA) && normA.length >= 12) {
+    return true;
+  }
+
+  // 3. Word-level containment and novel words analysis
+  const qWords = normQ.split(/\s+/).filter(w => w.length > 2);
+  const aWords = normA.split(/\s+/).filter(w => w.length > 2);
+
+  if (aWords.length > 0 && qWords.length > 0) {
+    const qWordSet = new Set(qWords);
+    const nonQWords = aWords.filter(w => !qWordSet.has(w));
+    const overlapRatio = (aWords.length - nonQWords.length) / aWords.length;
+
+    // High overlap and very few non-question words
+    if (overlapRatio >= 0.70 && nonQWords.length <= 6) return true;
+    if (overlapRatio >= 0.85 && nonQWords.length <= 10) return true;
+  }
+
+  return false;
+}
+
+/**
  * Intelligent Concept-Aware Semantic Evaluator
  * Evaluates the answer against the specific question's core concepts.
  * Detects wrong answers, nonsense, "I don't know", and incorrect statements.
@@ -419,7 +472,28 @@ export async function evaluateAnswerIntelligently({ question, userAnswer, role, 
     };
   }
 
-  // 2. Check for empty or trivial answers (< 10 chars)
+  // 2. Check for question copying/echoing (e.g. user pasted question or question + "Your Response")
+  if (isQuestionEchoOrParrot(question, trimmed)) {
+    return {
+      clarity: 0.0,
+      relevance: 0.0,
+      depth: 0.0,
+      communication: 0.0,
+      problemSolving: 0.0,
+      overall: 0.0,
+      strengths: ["None. The submitted response merely copies or repeats the question prompt."],
+      missingConcepts: ["You echoed the prompt instead of providing an actual technical explanation or solution."],
+      incorrectConcepts: [`Question Echo Detected: The submitted response repeats the question prompt ("${trimmed.slice(0, 80)}...") without answering it.`],
+      improvements: [
+        "Do not copy or paste the question text into the response box.",
+        "Provide a substantive technical explanation answering the core principles, mechanisms, and trade-offs."
+      ],
+      strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
+      adaptiveHint: "Question echoed back without an answer (0.0/10). Re-asking a foundational question to gauge comprehension."
+    };
+  }
+
+  // 3. Check for empty or trivial answers (< 10 chars)
   if (trimmed.length < 10) {
     return {
       clarity: 0.0,
@@ -437,7 +511,7 @@ export async function evaluateAnswerIntelligently({ question, userAnswer, role, 
     };
   }
 
-  // 3. Check for common evasive or "I don't know" answers
+  // 4. Check for common evasive or "I don't know" answers
   const isIdk = /^(i don'?t know|no idea|skip|not sure|pass|na|none|idk|dont know)\.?$/i.test(trimmed);
   if (isIdk) {
     return {
@@ -478,10 +552,11 @@ Evaluate the candidate's answer strictly and fairly using the 10-point rubric:
 4. Depth of Explanation (0-10)
 5. Problem-Solving / Practical Approach (0-10)
 
-IMPORTANT:
-- If the answer is completely off-topic or irrelevant (e.g. talking about food, movies, or unrelated topics), give 0 for Relevance and Correctness, with Overall = 0!
-- If the answer is factually WRONG or claims incorrect things, give low scores (1-3) in Technical Correctness and Relevance!
-- Do NOT inflate scores for length alone.
+IMPORTANT CRITICAL RULES:
+- If the candidate merely copies, repeats, echoes, or paraphrases the question prompt (or just appends placeholder phrases like "Your response"), give STRICTLY 0.0 across all dimensions (overall: 0.0, correctness: 0.0, relevance: 0.0, depth: 0.0, clarity: 0.0, problemSolving: 0.0)!
+- If the answer is completely off-topic or irrelevant (e.g. talking about food, movies, or unrelated topics), give 0.0 for Relevance, Correctness, and Overall = 0.0!
+- If the answer is factually WRONG or claims incorrect things, give low scores (1.0-3.0) in Technical Correctness and Relevance!
+- Do NOT inflate scores for length alone or for repeating the prompt's own keywords without explaining them.
 
 Return ONLY a valid JSON object matching this schema:
 {
@@ -525,9 +600,49 @@ Return ONLY a valid JSON object matching this schema:
  * Evaluates semantic content, detects incorrect claims, and scores accurately.
  */
 function performSemanticConceptValidation(question, answer, role, difficulty) {
+  // Check if answer is an echo or copy of the question
+  if (isQuestionEchoOrParrot(question, answer)) {
+    return {
+      clarity: 0.0,
+      relevance: 0.0,
+      depth: 0.0,
+      communication: 0.0,
+      problemSolving: 0.0,
+      overall: 0.0,
+      strengths: ["None. The submitted response merely copies or repeats the question prompt."],
+      missingConcepts: ["You echoed the prompt instead of providing an actual technical explanation or solution."],
+      incorrectConcepts: [`Question Echo Detected: The submitted response repeats the question prompt without answering it.`],
+      improvements: [
+        "Do not copy or paste the question into the response box.",
+        "Provide a direct technical explanation addressing the core principles, architecture, and trade-offs."
+      ],
+      strongerAnswer: generateStrongerAnswerTemplate(question, [], []),
+      adaptiveHint: "Question echoed back without an answer (0.0/10). Re-asking a foundational question to gauge comprehension."
+    };
+  }
+
   const lowerAnswer = answer.toLowerCase();
   const lowerQuestion = question.toLowerCase();
   const answerWords = answer.trim().split(/\s+/).filter(Boolean);
+
+  // Stop words for novel content analysis
+  const stopWords = new Set([
+    'the','be','to','of','and','a','in','that','have','i','it','for','not','on','with','he','as','you','do','at','this',
+    'but','his','by','from','they','we','say','her','she','or','an','will','my','one','all','would','there','their','what',
+    'so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know',
+    'take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come',
+    'its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because',
+    'any','these','give','day','most','us','is','are','was','were','has','had','been','response','question','answer'
+  ]);
+
+  const qWordSet = new Set(
+    lowerQuestion.replace(/[^\w\s]/g, ' ').split(/\s+/).filter(w => w.length > 2)
+  );
+
+  const novelWords = answerWords.filter(w => {
+    const clean = w.toLowerCase().replace(/[^\w]/g, '');
+    return clean.length > 2 && !qWordSet.has(clean) && !stopWords.has(clean);
+  });
 
   // Find the exact or highest-overlap matching question in QUESTION_REPOSITORY
   let bestMatchItem = null;
@@ -565,21 +680,42 @@ function performSemanticConceptValidation(question, answer, role, difficulty) {
   const allConcepts = bestMatchItem ? (bestMatchItem.keyConcepts || []) : [];
   const wrongConceptsList = bestMatchItem ? (bestMatchItem.wrongConcepts || []) : [];
 
-  // Match key concepts
+  // Match key concepts:
+  // Must demonstrate genuine knowledge, not merely parrot words already present in the prompt
   const matchedConcepts = [];
   allConcepts.forEach(c => {
-    const keywords = c.toLowerCase().split(/[\s/]+/);
-    const hasMatch = keywords.some(k => k.length > 2 && lowerAnswer.includes(k));
-    if (hasMatch) matchedConcepts.push(c);
+    const cLower = c.toLowerCase();
+    // 1. Direct multi-word phrase match
+    if (cLower.split(/\s+/).length > 1 && lowerAnswer.includes(cLower)) {
+      if (!lowerQuestion.includes(cLower) || novelWords.length >= 10) {
+        matchedConcepts.push(c);
+        return;
+      }
+    }
+    // 2. Significant keywords of the concept that were NOT in the question
+    const conceptTokens = cLower.split(/[\s/]+/).filter(w => w.length > 2 && !stopWords.has(w));
+    const nonQConceptTokens = conceptTokens.filter(t => !qWordSet.has(t));
+
+    if (nonQConceptTokens.length > 0) {
+      // Must match at least one significant non-question token from the concept
+      const hasMatch = nonQConceptTokens.some(t => new RegExp(`\\b${t}\\b`, 'i').test(lowerAnswer));
+      if (hasMatch) {
+        matchedConcepts.push(c);
+      }
+    } else {
+      // All tokens of the concept were in the question, so candidate must use them in novel context
+      const allTokensMatch = conceptTokens.every(t => new RegExp(`\\b${t}\\b`, 'i').test(lowerAnswer));
+      if (allTokensMatch && novelWords.length >= 12) {
+        matchedConcepts.push(c);
+      }
+    }
   });
 
   // Check detected wrong concepts with phrase or pattern matching
   const detectedWrongConcepts = [];
   wrongConceptsList.forEach(wc => {
-    // Check if the actual erroneous phrase or assertion exists in the answer
     const cleanedWc = wc.toLowerCase().replace(/[()]/g, '');
     const wcWords = cleanedWc.split(/\s+/).filter(w => w.length > 2);
-    // Build a flexible contiguous phrase or strong collocation pattern
     if (wcWords.length >= 2) {
       const phraseRegex = new RegExp(wcWords.join('\\s+(?:[\\w]+\\s+)?'), 'i');
       if (phraseRegex.test(lowerAnswer)) {
@@ -594,7 +730,6 @@ function performSemanticConceptValidation(question, answer, role, difficulty) {
 
   // Check for nonsense, gibberish, or completely off-topic response
   const hasNonsense = /(asdf|qwer|blah|dummy|test test|cheese|cats|pizza|nothing|whatever|lol|haha|random)/i.test(lowerAnswer);
-  const isSuperShort = answerWords.length < 15;
   const isOffTopic = questionRelevanceRatio < 0.15 && matchedConcepts.length === 0;
 
   let correctness = 5.0;
@@ -603,13 +738,20 @@ function performSemanticConceptValidation(question, answer, role, difficulty) {
   let clarity = 5.0;
   let problemSolving = 4.0;
 
-  if (hasNonsense || isOffTopic) {
-    // Answer is completely off-topic, nonsense, or irrelevant
+  if (hasNonsense || isOffTopic || novelWords.length < 4) {
+    // Answer is completely off-topic, nonsense, or has virtually no novel words
     correctness = 0.0;
     relevance = 0.0;
     depth = 0.0;
-    clarity = 1.0;
+    clarity = 0.0;
     problemSolving = 0.0;
+  } else if (novelWords.length < 10) {
+    // Extremely thin / repeating prompt with minimal addition
+    correctness = 1.0;
+    relevance = 1.5;
+    depth = 0.5;
+    clarity = 2.0;
+    problemSolving = 1.0;
   } else if (detectedWrongConcepts.length > 0) {
     // Answer contains explicit factual errors
     correctness = Math.max(1.0, 3.0 - detectedWrongConcepts.length);
@@ -618,29 +760,29 @@ function performSemanticConceptValidation(question, answer, role, difficulty) {
     problemSolving = 1.5;
   } else {
     // Normal technical answer evaluation
-    const conceptRatio = allConcepts.length > 0 ? (matchedConcepts.length / allConcepts.length) : questionRelevanceRatio;
+    const conceptRatio = allConcepts.length > 0 ? (matchedConcepts.length / allConcepts.length) : (novelWords.length / 30);
 
-    if (conceptRatio >= 0.5 || matchedConcepts.length >= 3) {
+    if ((conceptRatio >= 0.5 || matchedConcepts.length >= 3) && novelWords.length >= 25) {
       // Strong to exceptional answer
       correctness = Math.min(9.5, 6.5 + conceptRatio * 3.0);
       relevance = Math.min(9.5, 7.0 + questionRelevanceRatio * 2.5);
       depth = Math.min(9.0, 6.0 + conceptRatio * 2.5 + (answerWords.length > 60 ? 1.0 : 0));
       problemSolving = Math.min(9.5, 6.5 + conceptRatio * 3.0);
       clarity = 7.5;
-    } else if (conceptRatio >= 0.25 || matchedConcepts.length >= 1) {
+    } else if ((conceptRatio >= 0.25 || matchedConcepts.length >= 1) && novelWords.length >= 15) {
       // Moderate answer
-      correctness = 5.5 + conceptRatio * 2.0;
-      relevance = 6.0 + questionRelevanceRatio * 2.0;
-      depth = 4.5 + (answerWords.length > 40 ? 1.0 : 0);
-      problemSolving = 5.0;
+      correctness = Math.min(6.5, 4.5 + conceptRatio * 2.0);
+      relevance = Math.min(6.5, 4.5 + questionRelevanceRatio * 2.0);
+      depth = Math.min(6.0, 3.5 + (answerWords.length > 40 ? 1.0 : 0));
+      problemSolving = 4.5;
       clarity = 6.0;
     } else {
-      // Weak answer with minimal conceptual overlap
-      correctness = 3.5;
-      relevance = 3.5;
-      depth = 2.5;
-      problemSolving = 3.0;
-      clarity = 4.5;
+      // Weak answer with minimal conceptual depth or novel vocabulary
+      correctness = Math.min(3.5, 1.5 + (novelWords.length / 10));
+      relevance = Math.min(3.5, 1.5 + (novelWords.length / 10));
+      depth = 2.0;
+      problemSolving = 2.0;
+      clarity = 4.0;
     }
   }
 
@@ -661,42 +803,43 @@ function performSemanticConceptValidation(question, answer, role, difficulty) {
   const missing = [];
   const improvements = [];
 
-  if (correctness >= 7.0) {
-    strengths.push("Accurately identified essential technical principles and trade-offs.");
-  }
-  if (matchedConcepts.length > 0) {
-    strengths.push(`Addressed core technical areas: ${matchedConcepts.slice(0, 4).join(', ')}.`);
-  }
-  if (hasStructure) {
-    strengths.push("Well-structured delivery with logical flow.");
-  }
-  if (strengths.length === 0) {
-    if (relevantQuestionKeywords.length > 0) {
-      strengths.push(`Referenced relevant terms: ${relevantQuestionKeywords.slice(0, 3).join(', ')}.`);
-    } else {
+  if (overall === 0.0 || correctness === 0.0) {
+    strengths.push("None. The submitted response did not provide an acceptable technical explanation.");
+    missing.push("A substantive, original technical answer explaining the mechanisms requested.");
+    improvements.push("Do not repeat or copy the question. Provide a direct, detailed answer explaining the underlying principles.");
+  } else {
+    if (correctness >= 7.0) {
+      strengths.push("Accurately identified essential technical principles and trade-offs.");
+    }
+    if (matchedConcepts.length > 0) {
+      strengths.push(`Addressed core technical areas: ${matchedConcepts.slice(0, 4).join(', ')}.`);
+    }
+    if (hasStructure) {
+      strengths.push("Well-structured delivery with logical flow.");
+    }
+    if (strengths.length === 0) {
       strengths.push("Attempted to respond to the prompt.");
     }
-  }
 
-  // Missing concepts
-  const missingItems = allConcepts.filter(c => !matchedConcepts.includes(c));
-  if (missingItems.length > 0) {
-    missing.push(...missingItems.slice(0, 3).map(m => `Elaborate on ${m}`));
-  } else if (answerWords.length < 50) {
-    missing.push("Provide deeper production examples and operational failure modes.");
-  }
+    const missingItems = allConcepts.filter(c => !matchedConcepts.includes(c));
+    if (missingItems.length > 0) {
+      missing.push(...missingItems.slice(0, 3).map(m => `Elaborate on ${m}`));
+    } else if (answerWords.length < 50) {
+      missing.push("Provide deeper production examples and operational failure modes.");
+    }
 
-  if (detectedWrongConcepts.length > 0) {
-    improvements.push(`Correct factual error: Note that "${detectedWrongConcepts[0]}" is incorrect.`);
-  }
-  if (correctness < 4.0) {
-    improvements.push("Directly answer the question asked without going off-topic or guessing.");
-    improvements.push("Focus on the fundamental definitions and structural differences.");
-  } else if (depth < 6.0) {
-    improvements.push("Incorporate real-world production trade-offs, scalability numbers, and latency considerations.");
-  }
-  if (!hasStructure) {
-    improvements.push("Structure your responses with clear signposts ('First...', 'In contrast...', 'In production, we handled this by...').");
+    if (detectedWrongConcepts.length > 0) {
+      improvements.push(`Correct factual error: Note that "${detectedWrongConcepts[0]}" is incorrect.`);
+    }
+    if (correctness < 4.0) {
+      improvements.push("Directly answer the question asked without going off-topic or guessing.");
+      improvements.push("Focus on the fundamental definitions and structural differences.");
+    } else if (depth < 6.0) {
+      improvements.push("Incorporate real-world production trade-offs, scalability numbers, and latency considerations.");
+    }
+    if (!hasStructure) {
+      improvements.push("Structure your responses with clear signposts ('First...', 'In contrast...', 'In production, we handled this by...').");
+    }
   }
 
   // Adaptive Hint
