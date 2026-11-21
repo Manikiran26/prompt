@@ -1,0 +1,19 @@
+{
+  "name": "interviewiq",
+  "version": "1.0.0",
+  "description": "InterviewIQ — Adaptive AI Interview Coach",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "openai": "^4.67.0",
+    "pdf-parse": "^2.4.5"
+  }
+}

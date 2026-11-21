@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InterviewIQ — Adaptive AI Interview Coach</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+  <style>
+    :root {
+      --bg: #090d16;
+      --bg-elevated: #0e1626;
+      --card: #121d33;
+      --card-hover: #16243f;
+      --border: #1e2e4a;
+      --border-subtle: #16233a;
+      --text: #f1f5f9;
+      --text-muted: #8899b2;
+      --text-dim: #54657e;
+      --accent: #6366f1;
+      --accent-strong: #818cf8;
+      --accent-glow: rgba(99, 102, 241, 0.25);
+      --accent-dim: rgba(99, 102, 241, 0.12);
+      --purple: #8b5cf6;
+      --emerald: #10b981;
+      --emerald-dim: rgba(16, 185, 129, 0.15);
+      --warn: #f59e0b;
+      --warn-dim: rgba(245, 158, 11, 0.15);
+      --danger: #ef4444;
+      --danger-dim: rgba(239, 68, 68, 0.15);
+      --radius: 12px;
+      --radius-sm: 8px;
+      --radius-lg: 18px;
+      --shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+      --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.2);
+      --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Navigation */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(9, 13, 22, 0.9);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid var(--border);
+      padding: 0.85rem 1.5rem;
+    }
+
+    .nav-inner {
+      max-width: 1280px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1.5rem;
+    }
+
+    .logo-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text);
+      cursor: pointer;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      box-shadow: 0 4px 14px var(--accent-glow);
+    }
+
+    .logo-text {
+      font-weight: 700;
+      font-size: 1.15rem;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+
+    .logo-tag {
+      font-size: 0.65rem;
+      font-weight: 600;
+      background: var(--accent-dim);
+      color: var(--accent-strong);
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      list-style: none;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 0.45rem 0.85rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      transition: all var(--transition);
+      text-decoration: none;
+    }
+
+    .nav-btn:hover {
+      color: var(--text);
+      background: var(--bg-elevated);
+      border-color: var(--border-subtle);
+    }
+
+    .nav-btn.active {
+      color: #fff;
+      background: var(--accent-dim);
+      border-color: rgba(99, 102, 241, 0.35);
+      font-weight: 600;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.8125rem;
+      cursor: pointer;
+      transition: border-color var(--transition);
+    }
+    .user-pill:hover { border-color: var(--accent); }
+    .avatar-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    /* Main Container */
+    main {
+      flex: 1;
+      max-width: 1280px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Views */
+    .view {
+      display: none;
+      animation: viewFade 220ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .view.active { display: block; }
+
+    @keyframes viewFade {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.65rem 1.25rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: inherit;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all var(--transition);
+      text-decoration: none;
+    }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--purple));
+      color: #ffffff;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 22px var(--accent-glow);
+      filter: brightness(1.08);
+    }
+
+    .btn-secondary {
+      background: var(--card);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--card-hover);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+    }
+    .btn-ghost:hover:not(:disabled) {
+      color: var(--text);
+      background: var(--bg-elevated);
+    }
+
+    .btn-sm { padding: 0.45rem 0.85rem; font-size: 0.8125rem; }
+    .btn-lg { padding: 0.95rem 2rem; font-size: 1rem; border-radius: 10px; }
+
+    /* Cards & Surfaces */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      box-shadow: var(--shadow-sm);
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .card:hover {
+      border-color: rgba(99, 102, 241, 0.3);
+    }
+
+    /* Badges & Tags */
+    .tag {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.3rem 0.65rem;
+      border-radius: 999px;
+      background: var(--bg-elevated);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .tag.accent { background: var(--accent-dim); color: var(--accent-strong); border-color: rgba(99, 102, 241, 0.35); }
+    .tag.emerald { background: var(--emerald-dim); color: var(--emerald); border-color: rgba(16, 185, 129, 0.3); }
+    .tag.warn { background: var(--warn-dim); color: var(--warn); border-color: rgba(245, 158, 11, 0.3); }
+    .tag.danger { background: var(--danger-dim); color: var(--danger); border-color: rgba(239, 68, 68, 0.3); }
+
+    /* Form Inputs */
+    .form-group { margin-bottom: 1.25rem; }
+    .form-label {
+      display: block;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      margin-bottom: 0.45rem;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.9375rem;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-dim);
+    }
+    .form-select option { background: var(--card); color: var(--text); }
+
+    /* Grids */
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.75rem; }
+    @media (max-width: 900px) {
+      .grid-3, .grid-4, .grid-5 { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .grid-2, .grid-3, .grid-4, .grid-5 { grid-template-columns: 1fr; }
+      .nav-links { display: none; }
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(4, 7, 14, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .modal-backdrop.active { display: flex; }
+    .modal {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 520px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: modalPop 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes modalPop {
+      from { opacity: 0; transform: scale(0.96) translateY(8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .modal-header {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-body { padding: 1.5rem; }
+
+    /* Toast */
+    .toast-container {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 120;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .toast {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--accent);
+      padding: 0.85rem 1.25rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.875rem;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      animation: slideInRight 200ms ease;
+    }
+    .toast.success { border-left-color: var(--emerald); }
+    .toast.error { border-left-color: var(--danger); }
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* Loading Overlay */
+    .loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(9, 13, 22, 0.88);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 110;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+    .loading-overlay.active { display: flex; }
+    .spinner {
+      width: 44px;
+      height: 44px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 0.95rem; font-weight: 500; color: var(--text-muted); }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 2rem 1.5rem;
+      background: var(--bg-elevated);
+      color: var(--text-dim);
+      font-size: 0.8125rem;
+      text-align: center;
+      margin-top: auto;
+    }
+
+    /* Stat Card */
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .stat-card .label { font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; letter-spacing: 0.05em; }
+    .stat-card .value { font-size: 1.85rem; font-weight: 700; color: var(--text); line-height: 1.1; font-variant-numeric: tabular-nums; }
+    .stat-card .sub { font-size: 0.75rem; color: var(--text-dim); }
+
+    /* Room Container */
+    .room-container { max-width: 880px; margin: 0 auto; }
+    .room-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.75rem;
+    }
+    .timer-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.85rem;
+      border-radius: 999px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+    .timer-pill.warning { border-color: var(--danger); color: var(--danger); background: var(--danger-dim); }
+
+    /* Rubric Score Circle */
+    .score-circle {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 800;
+      background: conic-gradient(var(--accent) calc(var(--score, 0) * 36deg), var(--border) 0deg);
+      position: relative;
+    }
+    .score-circle::before {
+      content: '';
+      position: absolute;
+      inset: 5px;
+      border-radius: 50%;
+      background: var(--card);
+    }
+    .score-circle span { position: relative; z-index: 1; color: var(--accent-strong); font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body>
+  <!-- Navigation Header -->
+  <header>
+    <div class="nav-inner">
+      <div class="logo-group" id="navLogo">
+        <div class="logo-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        </div>
+        <span class="logo-text">InterviewIQ</span>
+        <span class="logo-tag">Adaptive AI</span>
+      </div>
+
+      <nav>
+        <ul class="nav-links">
+          <li><button class="nav-btn active" data-view="dashboardView" id="navDash">Dashboard</button></li>
+          <li><button class="nav-btn" data-view="setupView" id="navSetup">New Interview</button></li>
+          <li><button class="nav-btn" data-view="resumeView" id="navResume">Resume AI</button></li>
+          <li><button class="nav-btn" data-view="analyticsView" id="navAnalytics">Analytics</button></li>
+          <li><button class="nav-btn" data-view="historyView" id="navHistory">History</button></li>
+          <li><button class="nav-btn" data-view="codingView" id="navCoding">Coding Mode</button></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <a href="/report.html" target="_blank" class="btn btn-secondary btn-sm" title="View & Print Complete Project Report & BMC" style="color: var(--accent-strong); border-color: rgba(99, 102, 241, 0.4);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+          Report &amp; BMC
+        </a>
+        <button class="btn btn-secondary btn-sm" id="openSettingsBtn" title="AI Settings">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          AI Config
+        </button>
+        <div class="user-pill" id="userPill">
+          <div class="avatar-dot" id="avatarInitial">U</div>
+          <span id="userNameDisplay">Guest User</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main>
+    <!-- View 1: Dashboard View -->
+    <section class="view active" id="dashboardView">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+          <h1 style="font-size: 1.85rem; font-weight: 700; letter-spacing: -0.02em;">Welcome, <span id="dashGreetingName">Candidate</span> 👋</h1>
+          <p style="color: var(--text-muted); font-size: 0.95rem;">Real-time interview preparation metrics and adaptive coaching performance.</p>
+        </div>
+        <button class="btn btn-primary" id="dashStartInterviewBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          Start New Interview
+        </button>
+      </div>
+
+      <!-- Live Database Metrics -->
+      <div class="grid-4" style="margin-bottom: 2rem;">
+        <div class="stat-card">
+          <span class="label">Total Interviews</span>
+          <span class="value" id="dashTotalInterviews">0</span>
+          <span class="sub">Completed sessions</span>
+        </div>
+        <div class="stat-card">
+          <span class="label">Average Score</span>
+          <span class="value" id="dashAvgScore">0.0</span>
+          <span class="sub">Out of 10.0 scale</span>
+        </div>
+        <div class="stat-card">
+          <span class="label">Highest Score</span>
+          <span class="value" id="dashBestScore">0.0</span>
+          <span class="sub">Personal record</span>
+        </div>
+        <div class="stat-card">
+          <span class="label">Daily Streak</span>
+          <span class="value" id="dashStreak">0 Days</span>
+          <span class="sub">Active challenge streak</span>
+        </div>
+      </div>
+
+      <!-- Today's Daily Challenge -->
+      <div class="card" style="margin-bottom: 2rem; border-color: rgba(99, 102, 241, 0.4); background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%);">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;">
+          <div style="flex: 1;">
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.5rem;">
+              <span class="tag accent">Daily Interview Challenge</span>
+              <span class="tag" id="dailyCategory">Technical</span>
+            </div>
+            <h3 id="dailyQuestionText" style="font-size: 1.15rem; font-weight: 600; margin-bottom: 0.35rem;">Explain database indexing under the hood and when it can degrade performance.</h3>
+            <p style="color: var(--text-muted); font-size: 0.85rem;">Answer this question to maintain your daily streak and build interview readiness.</p>
+          </div>
+          <button class="btn btn-secondary" id="solveDailyBtn">Solve Challenge</button>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="grid-2" style="margin-bottom: 2rem;">
+        <div class="card">
+          <h3 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 1rem;">Performance Progression</h3>
+          <div style="height: 240px; position: relative;">
+            <canvas id="performanceChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 1rem;">Competency Breakdown</h3>
+          <div style="height: 240px; position: relative;">
+            <canvas id="competencyChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent History List -->
+      <div class="card">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;">
+          <h3 style="font-size: 1.05rem; font-weight: 600;">Recent Interview Sessions</h3>
+          <button class="btn btn-ghost btn-sm" id="viewAllHistoryBtn">View All</button>
+        </div>
+        <div id="recentHistoryList" style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="text-align: center; color: var(--text-muted); padding: 2rem;">No interview sessions recorded yet. Start your first session above!</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- View 2: Interview Setup View -->
+    <section class="view" id="setupView">
+      <div style="max-width: 680px; margin: 1rem auto;">
+        <div style="text-align: center; margin-bottom: 2rem;">
+          <h1 style="font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem;">Configure Your Interview</h1>
+          <p style="color: var(--text-muted); font-size: 1rem;">Select your target role, difficulty level, and interview type to personalize the simulation.</p>
+        </div>
+
+        <div class="card">
+          <form id="setupForm">
+            <div class="form-group">
+              <label class="form-label" for="targetRole">Target Job Role</label>
+              <select class="form-select" id="targetRole" required>
+                <option value="">Select a job role</option>
+                <option value="Software Engineer" selected>Software Engineer</option>
+                <option value="Frontend Developer">Frontend Developer</option>
+                <option value="Backend Developer">Backend Developer</option>
+                <option value="Full Stack Developer">Full Stack Developer</option>
+                <option value="Java Developer">Java Developer</option>
+                <option value="Data Analyst">Data Analyst</option>
+                <option value="Custom">Custom Job Role...</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="customRoleGroup" style="display: none;">
+              <label class="form-label" for="customRoleInput">Custom Job Role Title</label>
+              <input type="text" class="form-input" id="customRoleInput" placeholder="e.g. Cloud Solutions Architect, iOS Engineer...">
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="interviewType">Interview Type</label>
+                <select class="form-select" id="interviewType" required>
+                  <option value="Technical Interview" selected>Technical Interview</option>
+                  <option value="HR Interview">HR Interview</option>
+                  <option value="Behavioral Interview">Behavioral Interview</option>
+                  <option value="Resume-Based Interview">Resume-Based Interview</option>
+                  <option value="Mixed Interview">Mixed Interview</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="difficultyLevel">Difficulty Level</label>
+                <select class="form-select" id="difficultyLevel" required>
+                  <option value="Beginner">Beginner (Foundational)</option>
+                  <option value="Intermediate" selected>Intermediate (Standard)</option>
+                  <option value="Advanced">Advanced (Architectural / Senior)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid-2">
+              <div class="form-group">
+                <label class="form-label" for="questionCountSelect">Number of Questions</label>
+                <select class="form-select" id="questionCountSelect">
+                  <option value="3">3 Questions (Quick Assessment)</option>
+                  <option value="5" selected>5 Questions (Standard Practice)</option>
+                  <option value="10">10 Questions (Comprehensive Mock)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label" for="durationSelect">Session Duration</label>
+                <select class="form-select" id="durationSelect">
+                  <option value="15" selected>15 Minutes</option>
+                  <option value="30">30 Minutes</option>
+                  <option value="45">45 Minutes</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="experienceLevel">Experience Level</label>
+              <select class="form-select" id="experienceLevel" required>
+                <option value="Entry Level (0-2 years)">Entry Level (0–2 years)</option>
+                <option value="Mid Level (3-5 years)" selected>Mid Level (3–5 years)</option>
+                <option value="Senior (6-9 years)">Senior (6–9 years)</option>
+                <option value="Staff/Principal (10+ years)">Staff/Principal (10+ years)</option>
+              </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg" style="width: 100%; margin-top: 1rem;">
+              Start Live Interview Session
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- View 3: Live Interview Room -->
+    <section class="view" id="interviewView">
+      <div class="room-container">
+        <div class="room-header">
+          <div>
+            <span class="tag accent" id="roomRoleTag">Software Engineer</span>
+            <span class="tag" id="roomTypeTag">Technical</span>
+            <span class="tag" id="roomDiffTag">Intermediate</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 1rem;">
+            <div class="timer-pill" id="interviewTimer">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+              <span id="timerDisplay">15:00</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" id="endSessionBtn">End Session</button>
+          </div>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div style="margin-bottom: 1.5rem;">
+          <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; color: var(--text-muted); margin-bottom: 0.4rem;">
+            <span id="questionCount">Question <span id="currentQ">1</span> of <span id="totalQ">5</span></span>
+            <span id="scoreBadge" style="display: none;">Running Avg: <strong id="avgScore" style="color: var(--accent-strong);">0.0</strong>/10</span>
+          </div>
+          <div style="width: 100%; height: 6px; background: var(--border); border-radius: 999px; overflow: hidden;">
+            <div id="progressFill" style="width: 20%; height: 100%; background: linear-gradient(90deg, var(--accent), var(--purple)); transition: width 350ms ease;"></div>
+          </div>
+        </div>
+
+        <!-- Question Card -->
+        <article class="card" id="questionCard" style="margin-bottom: 1.5rem; border-color: rgba(99, 102, 241, 0.35);">
+          <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+            <span class="tag accent" id="qNumber">Question 1</span>
+            <span class="tag" id="qType">Technical</span>
+            <span class="tag" id="qDifficulty">Standard</span>
+          </div>
+          <h2 id="questionText" style="font-size: 1.25rem; font-weight: 600; line-height: 1.5; color: var(--text);">Loading question...</h2>
+        </article>
+
+        <!-- Answer Editor -->
+        <div class="card" id="answerArea" style="margin-bottom: 1.5rem;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+            <span style="font-size: 0.8125rem; font-weight: 600; color: var(--text);">Your Response</span>
+            <button class="btn btn-ghost btn-sm" id="voiceToggleBtn" title="Speech-to-text voice input">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+              <span id="voiceBtnText">Voice Mode</span>
+            </button>
+          </div>
+          <textarea class="form-textarea" id="answerInput" style="min-height: 160px; font-family: inherit; resize: vertical;" placeholder="Type your answer here... Be specific, explain your reasoning, and structure your response."></textarea>
+          
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+            <span style="font-size: 0.75rem; color: var(--text-dim);"><span id="charCount">0</span> characters</span>
+            <div style="display: flex; gap: 0.75rem;">
+              <button class="btn btn-secondary" id="skipBtn">Skip</button>
+              <button class="btn btn-primary" id="submitBtn" disabled>Submit Answer</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Feedback & Evaluation Card -->
+        <article class="card" id="feedbackCard" style="display: none; margin-bottom: 2rem; border-color: rgba(99, 102, 241, 0.45);">
+          <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+              <div class="score-circle" id="scoreCircle">
+                <span id="scoreCircleValue">0.0</span>
+              </div>
+              <div>
+                <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Overall Score</span>
+                <div style="font-size: 1.75rem; font-weight: 800; color: var(--accent-strong); line-height: 1;"><span id="overallScore">0.0</span> <span style="font-size: 1rem; color: var(--text-dim);">/ 10.0</span></div>
+              </div>
+            </div>
+            <span class="tag accent" id="feedbackQNum">Question 1 Feedback</span>
+          </div>
+
+          <!-- 5-Dimension Rubric Grid -->
+          <div class="grid-5" id="rubricGrid" style="margin-bottom: 1.5rem;"></div>
+
+          <!-- Detailed Strengths & Deficiencies -->
+          <div class="grid-2" style="margin-bottom: 1.25rem;">
+            <div class="card" style="background: var(--bg-elevated);">
+              <h4 style="font-size: 0.875rem; font-weight: 600; color: var(--emerald); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                What You Did Well
+              </h4>
+              <ul id="strengthsList" style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem; color: var(--text-muted);"></ul>
+            </div>
+
+            <div class="card" style="background: var(--bg-elevated);">
+              <h4 style="font-size: 0.875rem; font-weight: 600; color: var(--warn); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                Areas to Improve & Missing Nuances
+              </h4>
+              <ul id="improvementsList" style="list-style: none; display: flex; flex-direction: column; gap: 0.4rem; font-size: 0.85rem; color: var(--text-muted);"></ul>
+            </div>
+          </div>
+
+          <!-- Incorrect Concepts Banner (if any) -->
+          <div class="card" id="incorrectConceptsBox" style="background: var(--danger-dim); border-color: rgba(239, 68, 68, 0.4); margin-bottom: 1.25rem; display: none;">
+            <h4 style="font-size: 0.875rem; font-weight: 600; color: var(--danger); margin-bottom: 0.35rem;">Incorrect Concepts Detected:</h4>
+            <ul id="incorrectConceptsList" style="list-style: none; font-size: 0.85rem; color: #fca5a5;"></ul>
+          </div>
+
+          <!-- Stronger Sample Answer Box -->
+          <div class="card" id="strongerAnswerBox" style="background: var(--bg-elevated); margin-bottom: 1.25rem;">
+            <h4 style="font-size: 0.875rem; font-weight: 600; color: var(--accent-strong); margin-bottom: 0.5rem;">Example of a High-Scoring Response:</h4>
+            <p id="strongerAnswerText" style="font-size: 0.875rem; color: var(--text); line-height: 1.6;"></p>
+          </div>
+
+          <!-- Adaptive Reason Hint -->
+          <div class="card" style="background: rgba(99, 102, 241, 0.08); border-color: rgba(99, 102, 241, 0.3); margin-bottom: 1.5rem;">
+            <div id="adaptiveHint" style="font-size: 0.875rem; color: var(--text);"></div>
+          </div>
+
+          <!-- Next Action Buttons -->
+          <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+            <button class="btn btn-primary" id="nextBtn">Proceed to Next Question</button>
+            <button class="btn btn-secondary" id="finishBtn" style="display: none;">Finish Interview</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- View 4: Results View -->
+    <section class="view" id="resultsView">
+      <div style="max-width: 720px; margin: 2rem auto; text-align: center;">
+        <div style="width: 72px; height: 72px; margin: 0 auto 1.5rem; border-radius: 50%; background: var(--emerald-dim); border: 1px solid var(--emerald); display: flex; align-items: center; justify-content: center; color: var(--emerald);">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </div>
+        <h1 style="font-size: 2.25rem; font-weight: 800; margin-bottom: 0.5rem;">Interview Complete!</h1>
+        <p id="resultsSummary" style="color: var(--text-muted); font-size: 1.05rem; margin-bottom: 2rem;">Here is your overall performance report based on the completed mock session.</p>
+
+        <div class="card" style="margin-bottom: 2rem;">
+          <div style="font-size: 4rem; font-weight: 800; color: var(--accent-strong); line-height: 1; margin-bottom: 0.5rem;" id="finalScore">0.0</div>
+          <div style="color: var(--text-muted); font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1.5rem;">Final InterviewIQ Score (/ 10.0)</div>
+
+          <div class="grid-3">
+            <div class="stat-card" style="background: var(--bg);">
+              <span class="label">Questions Answered</span>
+              <span class="value" id="statQuestions">0</span>
+            </div>
+            <div class="stat-card" style="background: var(--bg);">
+              <span class="label">Average Score</span>
+              <span class="value" id="statAvg">0.0</span>
+            </div>
+            <div class="stat-card" style="background: var(--bg);">
+              <span class="label">Best Question</span>
+              <span class="value" id="statBest">0.0</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+          <button class="btn btn-primary btn-lg" id="restartBtn">Practice Another Session</button>
+          <button class="btn btn-secondary btn-lg" id="printReportBtn">Print / Save PDF</button>
+          <button class="btn btn-ghost btn-lg" id="returnDashBtn">Back to Dashboard</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- View 5: Resume Analyzer View -->
+    <section class="view" id="resumeView">
+      <div style="max-width: 800px; margin: 1rem auto;">
+        <h1 style="font-size: 1.85rem; font-weight: 700; margin-bottom: 0.5rem;">Resume-Based Interview Simulator</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem; margin-bottom: 2rem;">Upload your resume in PDF format (or TXT) to automatically extract your skills, frameworks, and projects for customized interview vetting.</p>
+
+        <!-- PDF Upload Zone -->
+        <div class="card" style="margin-bottom: 2rem;">
+          <div id="resumeDropZone" style="border: 2px dashed var(--border); border-radius: var(--radius); padding: 3rem 1.5rem; text-align: center; cursor: pointer; transition: all var(--transition); background: rgba(99, 102, 241, 0.03);">
+            <div style="width: 56px; height: 56px; margin: 0 auto 1rem; border-radius: 50%; background: var(--accent-dim); display: flex; align-items: center; justify-content: center; color: var(--accent-strong);">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            </div>
+            <h3 style="font-size: 1.15rem; font-weight: 600; margin-bottom: 0.4rem;">Upload Your Resume (PDF or TXT)</h3>
+            <p style="color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;">Drag and drop your PDF resume file here, or click to browse</p>
+            <input type="file" id="resumeFileInput" accept=".pdf,.txt" style="display: none;">
+            <button type="button" class="btn btn-secondary btn-sm" id="browseResumeBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              Select PDF File
+            </button>
+          </div>
+
+          <!-- File Upload Progress / Info Badge -->
+          <div id="fileUploadStatus" class="card" style="margin-top: 1rem; display: none; background: var(--bg-elevated); padding: 0.85rem 1.25rem; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 0.75rem;">
+              <span class="tag emerald">PDF Loaded</span>
+              <div>
+                <strong id="uploadedFileName" style="color: var(--text); font-size: 0.875rem;">resume.pdf</strong>
+                <div id="uploadedFileSize" style="font-size: 0.75rem; color: var(--text-dim);">0 KB</div>
+              </div>
+            </div>
+            <span class="tag emerald">✓ Ready</span>
+          </div>
+        </div>
+
+        <!-- Extracted Profile Results -->
+        <div class="card" id="extractedResumeCard" style="display: none;">
+          <h3 style="font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="color: var(--emerald);">✓</span> Extracted Candidate Profile
+          </h3>
+          <div class="form-group">
+            <label class="form-label">Identified Skills & Technologies</label>
+            <div id="extractedSkillsList" style="display: flex; gap: 0.5rem; flex-wrap: wrap;"></div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Identified Projects & Experience</label>
+            <div id="extractedProjectsList" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+          </div>
+          <button class="btn btn-primary btn-lg" id="startResumeInterviewBtn" style="width: 100%; margin-top: 1rem;">
+            Launch Resume-Based Mock Interview
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- View 6: Analytics View -->
+    <section class="view" id="analyticsView">
+      <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 1.85rem; font-weight: 700; margin-bottom: 0.5rem;">Performance Analytics & Mastery</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Review score progression over time, radar breakdown, and topic mastery.</p>
+      </div>
+
+      <div class="grid-2" style="margin-bottom: 2rem;">
+        <div class="card">
+          <h3 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 1rem;">Historical Score Trends</h3>
+          <div style="height: 280px; position: relative;">
+            <canvas id="analyticsLineChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="font-size: 1.05rem; font-weight: 600; margin-bottom: 1rem;">Evaluation Dimensions Radar</h3>
+          <div style="height: 280px; position: relative;">
+            <canvas id="analyticsRadarChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- View 7: History View -->
+    <section class="view" id="historyView">
+      <div style="margin-bottom: 2rem;">
+        <h1 style="font-size: 1.85rem; font-weight: 700; margin-bottom: 0.5rem;">Interview History</h1>
+        <p style="color: var(--text-muted); font-size: 0.95rem;">Review past completed sessions and drill down into every question and evaluation.</p>
+      </div>
+
+      <div class="card">
+        <div id="fullHistoryList" style="display: flex; flex-direction: column; gap: 1rem;">
+          <div style="text-align: center; color: var(--text-muted); padding: 3rem;">Loading history...</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- View 8: Coding Mode View -->
+    <section class="view" id="codingView">
+      <div style="max-width: 980px; margin: 1rem auto;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+          <div>
+            <span class="tag accent">Coding Interview Sandbox</span>
+            <h1 style="font-size: 1.75rem; font-weight: 700; margin-top: 0.25rem;" id="codeChallengeTitle">Two Sum Target Index</h1>
+          </div>
+          <button class="btn btn-secondary btn-sm" id="nextChallengeBtn">Next Problem</button>
+        </div>
+
+        <div class="grid-2" style="margin-bottom: 1.5rem;">
+          <div class="card">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">Problem Description</h3>
+            <p id="codeChallengeDesc" style="color: var(--text-muted); font-size: 0.875rem; line-height: 1.6; margin-bottom: 1rem;">Loading problem...</p>
+            <div style="font-size: 0.8125rem; color: var(--text-dim);">Expected Complexity: <strong id="codeComplexity" style="color: var(--accent-strong);">O(n)</strong></div>
+          </div>
+          <div class="card">
+            <h3 style="font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem;">Test Cases & Output</h3>
+            <div id="codeTestResults" style="font-family: 'JetBrains Mono', monospace; font-size: 0.8125rem; color: var(--text-muted); background: var(--bg); padding: 0.75rem; border-radius: var(--radius-sm); min-height: 100px;">
+              Click 'Run Code & Tests' to execute your solution.
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="padding: 0; overflow: hidden;">
+          <div style="background: var(--bg-elevated); padding: 0.5rem 1rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between;">
+            <span style="font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: var(--text-muted);">solution.js</span>
+            <button class="btn btn-primary btn-sm" id="runCodeBtn">Run Code & Tests</button>
+          </div>
+          <textarea id="codeEditorInput" style="width: 100%; min-height: 280px; background: #070b12; color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 0.875rem; padding: 1rem; border: none; outline: none; line-height: 1.5;" spellcheck="false"></textarea>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Settings Modal (AI Configuration) -->
+  <div class="modal-backdrop" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 style="font-size: 1.15rem; font-weight: 700;">AI Engine Configuration</h3>
+        <button class="btn btn-ghost btn-sm" id="closeSettingsModalBtn">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+          InterviewIQ includes an intelligent concept-aware semantic rubric out-of-the-box. You may also provide your own OpenAI API key to use live GPT-4o models directly.
+        </p>
+        <form id="settingsForm">
+          <div class="form-group">
+            <label class="form-label" for="customApiKeyInput">OpenAI API Key (Optional)</label>
+            <input type="password" class="form-input" id="customApiKeyInput" placeholder="sk-...">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="customBaseUrlInput">Custom Base URL (Optional)</label>
+            <input type="text" class="form-input" id="customBaseUrlInput" placeholder="https://api.openai.com/v1">
+          </div>
+          <button type="submit" class="btn btn-primary" style="width: 100%;">Save Configuration</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loadingOverlay">
+    <div class="spinner"></div>
+    <div class="loading-text" id="loadingText">Processing...</div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Footer -->
+  <footer>
+    InterviewIQ — Adaptive AI Interview Coach • Built with Node.js, SQLite & AI
+  </footer>
+
+  <script type="module">
+    // State
+    const state = {
+      user: { id: 1, name: 'Candidate' },
+      currentSessionId: null,
+      currentRole: 'Software Engineer',
+      currentQuestion: null,
+      questionIndex: 0,
+      totalQuestions: 5,
+      timerSeconds: 15 * 60,
+      timerInterval: null,
+      scores: [],
+      codingChallenges: [],
+      currentChallengeIndex: 0,
+      recognition: null,
+      isRecording: false
+    };
+
+    // Chart instances
+    let perfChartInstance = null;
+    let compChartInstance = null;
+    let analyticsLineInstance = null;
+    let analyticsRadarInstance = null;
+
+    // View Navigation
+    const views = document.querySelectorAll('.view');
+    const navBtns = document.querySelectorAll('.nav-btn');
+
+    export function switchView(viewId) {
+      views.forEach(v => v.classList.remove('active'));
+      const target = document.getElementById(viewId);
+      if (target) target.classList.add('active');
+      navBtns.forEach(btn => btn.classList.toggle('active', btn.dataset.view === viewId));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      if (viewId === 'dashboardView') loadDashboardStats();
+      if (viewId === 'historyView') loadHistoryList();
+      if (viewId === 'analyticsView') loadAnalyticsView();
+      if (viewId === 'codingView') loadCodingChallenges();
+    }
+
+    // Helper: Toast
+    export function showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.getElementById('toastContainer').appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 250);
+      }, 3500);
+    }
+
+    // Helper: Loading Overlay
+    export function setLoading(show, text = 'Processing...') {
+      const overlay = document.getElementById('loadingOverlay');
+      overlay.classList.toggle('active', show);
+      document.getElementById('loadingText').textContent = text;
+    }
+
+    // Navigation Listeners
+    navBtns.forEach(btn => btn.addEventListener('click', () => switchView(btn.dataset.view)));
+    document.getElementById('navLogo').addEventListener('click', () => switchView('dashboardView'));
+    document.getElementById('dashStartInterviewBtn').addEventListener('click', () => switchView('setupView'));
+    document.getElementById('viewAllHistoryBtn').addEventListener('click', () => switchView('historyView'));
+    document.getElementById('restartBtn').addEventListener('click', () => switchView('setupView'));
+    document.getElementById('returnDashBtn').addEventListener('click', () => switchView('dashboardView'));
+    document.getElementById('printReportBtn').addEventListener('click', () => window.print());
+
+    // Settings Modal
+    const settingsModal = document.getElementById('settingsModal');
+    document.getElementById('openSettingsBtn').addEventListener('click', () => settingsModal.classList.add('active'));
+    document.getElementById('closeSettingsModalBtn').addEventListener('click', () => settingsModal.classList.remove('active'));
+    document.getElementById('settingsForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const apiKey = document.getElementById('customApiKeyInput').value.trim();
+      const baseUrl = document.getElementById('customBaseUrlInput').value.trim();
+      if (apiKey) localStorage.setItem('interviewiq_api_key', apiKey);
+      if (baseUrl) localStorage.setItem('interviewiq_base_url', baseUrl);
+      settingsModal.classList.remove('active');
+      showToast('AI configuration saved successfully', 'success');
+    });
+
+    // Custom Role Input Toggle
+    const targetRoleSelect = document.getElementById('targetRole');
+    const customRoleGroup = document.getElementById('customRoleGroup');
+    targetRoleSelect.addEventListener('change', () => {
+      customRoleGroup.style.display = targetRoleSelect.value === 'Custom' ? 'block' : 'none';
+      if (targetRoleSelect.value === 'Custom') document.getElementById('customRoleInput').focus();
+    });
+
+    // Answer Textarea Character Count
+    const answerInput = document.getElementById('answerInput');
+    const charCount = document.getElementById('charCount');
+    const submitBtn = document.getElementById('submitBtn');
+
+    answerInput.addEventListener('input', () => {
+      const len = answerInput.value.length;
+      charCount.textContent = len;
+      submitBtn.disabled = len < 5;
+    });
+
+    // Timer Implementation
+    function startTimer(durationMinutes) {
+      if (state.timerInterval) clearInterval(state.timerInterval);
+      state.timerSeconds = durationMinutes * 60;
+      updateTimerDisplay();
+
+      state.timerInterval = setInterval(() => {
+        state.timerSeconds--;
+        updateTimerDisplay();
+        if (state.timerSeconds <= 0) {
+          clearInterval(state.timerInterval);
+          showToast('Time limit reached for this session!', 'error');
+          endCurrentInterview();
+        }
+      }, 1000);
+    }
+
+    function updateTimerDisplay() {
+      const mins = Math.floor(state.timerSeconds / 60);
+      const secs = state.timerSeconds % 60;
+      const display = document.getElementById('timerDisplay');
+      const timerPill = document.getElementById('interviewTimer');
+      display.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      if (state.timerSeconds < 180) {
+        timerPill.classList.add('warning');
+      } else {
+        timerPill.classList.remove('warning');
+      }
+    }
+
+    // Voice Interview Mode (Web Speech API)
+    const voiceToggleBtn = document.getElementById('voiceToggleBtn');
+    const voiceBtnText = document.getElementById('voiceBtnText');
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      state.recognition = new SpeechRecognition();
+      state.recognition.continuous = true;
+      state.recognition.interimResults = true;
+
+      state.recognition.onresult = (event) => {
+        let transcript = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        answerInput.value += ' ' + transcript;
+        answerInput.dispatchEvent(new Event('input'));
+      };
+
+      state.recognition.onerror = () => {
+        state.isRecording = false;
+        voiceBtnText.textContent = 'Voice Mode';
+      };
+
+      voiceToggleBtn.addEventListener('click', () => {
+        if (!state.isRecording) {
+          state.recognition.start();
+          state.isRecording = true;
+          voiceBtnText.textContent = 'Listening... (Click to stop)';
+          voiceToggleBtn.style.color = '#ef4444';
+        } else {
+          state.recognition.stop();
+          state.isRecording = false;
+          voiceBtnText.textContent = 'Voice Mode';
+          voiceToggleBtn.style.color = '';
+        }
+      });
+    } else {
+      voiceToggleBtn.style.display = 'none';
+    }
+
+    // 1. START INTERVIEW FLOW
+    document.getElementById('setupForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      let role = targetRoleSelect.value;
+      if (role === 'Custom') {
+        role = document.getElementById('customRoleInput').value.trim() || 'Software Engineer';
+      }
+
+      const interviewType = document.getElementById('interviewType').value;
+      const difficulty = document.getElementById('difficultyLevel').value;
+      const questionCount = parseInt(document.getElementById('questionCountSelect').value, 10) || 5;
+      const duration = parseInt(document.getElementById('durationSelect').value, 10) || 15;
+
+      state.currentRole = role;
+      state.totalQuestions = questionCount;
+      state.scores = [];
+
+      document.getElementById('roomRoleTag').textContent = role;
+      document.getElementById('roomTypeTag').textContent = interviewType;
+      document.getElementById('roomDiffTag').textContent = difficulty;
+      document.getElementById('totalQ').textContent = questionCount;
+      document.getElementById('currentQ').textContent = '1';
+
+      setLoading(true, 'Generating customized opening interview question...');
+      try {
+        const res = await fetch('/api/interview/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role, interviewType, difficulty, questionCount, duration })
+        });
+        const data = await res.json();
+        state.currentSessionId = data.sessionId;
+        state.questionIndex = 0;
+
+        renderQuestion(data);
+        startTimer(duration);
+        switchView('interviewView');
+      } catch (err) {
+        console.error(err);
+        showToast('Failed to start interview session', 'error');
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    function renderQuestion(data) {
+      state.currentQuestion = data.question;
+      document.getElementById('questionText').textContent = data.question;
+      document.getElementById('qNumber').textContent = `Question ${state.questionIndex + 1}`;
+      document.getElementById('qType').textContent = data.type || 'Technical';
+      document.getElementById('qDifficulty').textContent = data.difficulty || 'Intermediate';
+
+      document.getElementById('feedbackCard').style.display = 'none';
+      answerInput.value = '';
+      answerInput.disabled = false;
+      submitBtn.disabled = true;
+      document.getElementById('skipBtn').style.display = 'inline-flex';
+      charCount.textContent = '0';
+
+      const pct = (state.questionIndex / state.totalQuestions) * 100;
+      document.getElementById('progressFill').style.width = `${pct}%`;
+      document.getElementById('currentQ').textContent = state.questionIndex + 1;
+    }
+
+    // 2. SUBMIT ANSWER FLOW
+    submitBtn.addEventListener('click', async () => {
+      const answer = answerInput.value.trim();
+      if (!answer) return;
+
+      answerInput.disabled = true;
+      submitBtn.disabled = true;
+      document.getElementById('skipBtn').disabled = true;
+      setLoading(true, 'Evaluating your answer against the 10-point rubric...');
+
+      try {
+        const res = await fetch(`/api/interview/${state.currentSessionId}/answer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ answer })
+        });
+        const data = await res.json();
+        state.scores.push(data.evaluation.overall);
+        renderFeedback(data);
+      } catch (err) {
+        console.error(err);
+        answerInput.disabled = false;
+        submitBtn.disabled = false;
+        document.getElementById('skipBtn').disabled = false;
+        showToast('Error during answer evaluation', 'error');
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // Skip Button
+    document.getElementById('skipBtn').addEventListener('click', () => {
+      if (confirm('Skip this question? A score of 1.0 will be recorded for it.')) {
+        answerInput.value = 'Skipped question.';
+        submitBtn.disabled = false;
+        submitBtn.click();
+      }
+    });
+
+    function renderFeedback(data) {
+      const ev = data.evaluation;
+      const score = Number(ev.overall || 0);
+
+      // Animate score circle
+      const scoreCircle = document.getElementById('scoreCircle');
+      scoreCircle.style.setProperty('--score', score);
+      document.getElementById('scoreCircleValue').textContent = score.toFixed(1);
+      document.getElementById('overallScore').textContent = score.toFixed(1);
+
+      const qNumBadge = document.getElementById('feedbackQNum');
+      if (score === 0) {
+        qNumBadge.className = 'tag danger';
+        qNumBadge.textContent = 'Invalid / Gibberish Input (0.0/10)';
+        document.getElementById('overallScore').style.color = 'var(--danger)';
+        document.getElementById('scoreCircleValue').style.color = 'var(--danger)';
+      } else if (score < 4.0) {
+        qNumBadge.className = 'tag warn';
+        qNumBadge.textContent = `Question ${state.questionIndex + 1} Assessment (${score.toFixed(1)}/10)`;
+        document.getElementById('overallScore').style.color = 'var(--warn)';
+        document.getElementById('scoreCircleValue').style.color = 'var(--warn)';
+      } else {
+        qNumBadge.className = 'tag accent';
+        qNumBadge.textContent = `Question ${state.questionIndex + 1} Assessment (${score.toFixed(1)}/10)`;
+        document.getElementById('overallScore').style.color = 'var(--accent-strong)';
+        document.getElementById('scoreCircleValue').style.color = 'var(--accent-strong)';
+      }
+
+      // Rubric grid (5 dimensions)
+      const rubricGrid = document.getElementById('rubricGrid');
+      rubricGrid.innerHTML = '';
+      const dimensions = [
+        { label: 'Technical Correctness', val: ev.problemSolving || ev.correctness || 5 },
+        { label: 'Relevance', val: ev.relevance || 5 },
+        { label: 'Clarity', val: ev.clarity || 5 },
+        { label: 'Depth of Explanation', val: ev.depth || 5 },
+        { label: 'Communication Tone', val: ev.communication || 5 }
+      ];
+
+      dimensions.forEach(dim => {
+        const col = document.createElement('div');
+        col.className = 'stat-card';
+        col.style.padding = '0.75rem';
+        col.innerHTML = `
+          <span class="label" style="font-size: 0.65rem;">${dim.label}</span>
+          <span class="value" style="font-size: 1.25rem;">${Number(dim.val).toFixed(1)}</span>
+        `;
+        rubricGrid.appendChild(col);
+      });
+
+      // Strengths
+      const strengthsList = document.getElementById('strengthsList');
+      strengthsList.innerHTML = '';
+      (ev.strengths || []).forEach(s => {
+        const li = document.createElement('li');
+        li.textContent = `• ${s}`;
+        strengthsList.appendChild(li);
+      });
+
+      // Improvements & Missing Concepts
+      const improvementsList = document.getElementById('improvementsList');
+      improvementsList.innerHTML = '';
+      const allImprovements = [...(ev.missingConcepts || []), ...(ev.improvements || [])];
+      allImprovements.forEach(imp => {
+        const li = document.createElement('li');
+        li.textContent = `• ${imp}`;
+        improvementsList.appendChild(li);
+      });
+
+      // Incorrect Concepts Banner
+      const incorrectBox = document.getElementById('incorrectConceptsBox');
+      const incorrectList = document.getElementById('incorrectConceptsList');
+      if (ev.incorrectConcepts && ev.incorrectConcepts.length > 0) {
+        incorrectList.innerHTML = '';
+        ev.incorrectConcepts.forEach(ic => {
+          const li = document.createElement('li');
+          li.textContent = `⚠️ Misconception: ${ic}`;
+          incorrectList.appendChild(li);
+        });
+        incorrectBox.style.display = 'block';
+      } else {
+        incorrectBox.style.display = 'none';
+      }
+
+      // Stronger Sample Answer
+      document.getElementById('strongerAnswerText').textContent = ev.strongerAnswer || 'Provide concrete examples with trade-offs and quantifiable impact.';
+
+      // Adaptive Hint
+      document.getElementById('adaptiveHint').innerHTML = `<strong>Adaptive Direction:</strong> ${ev.adaptiveHint || 'Adjusting question difficulty to your performance.'}`;
+
+      document.getElementById('feedbackCard').style.display = 'block';
+      document.getElementById('feedbackCard').scrollIntoView({ behavior: 'smooth' });
+
+      // Action buttons
+      const nextBtn = document.getElementById('nextBtn');
+      const finishBtn = document.getElementById('finishBtn');
+
+      if (data.isComplete) {
+        nextBtn.style.display = 'none';
+        finishBtn.style.display = 'inline-flex';
+      } else {
+        nextBtn.style.display = 'inline-flex';
+        finishBtn.style.display = 'none';
+        state.nextQuestionData = data.nextQuestion;
+      }
+
+      document.getElementById('skipBtn').style.display = 'none';
+
+      // Update badge
+      const avg = state.scores.reduce((a, b) => a + b, 0) / state.scores.length;
+      document.getElementById('avgScore').textContent = avg.toFixed(1);
+      document.getElementById('scoreBadge').style.display = 'inline-flex';
+    }
+
+    // Next Question Button
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      state.questionIndex++;
+      if (state.nextQuestionData) {
+        renderQuestion(state.nextQuestionData);
+      }
+    });
+
+    // Finish Interview Button
+    document.getElementById('finishBtn').addEventListener('click', endCurrentInterview);
+    document.getElementById('endSessionBtn').addEventListener('click', () => {
+      if (confirm('End this interview session now? Your progress will be saved.')) {
+        endCurrentInterview();
+      }
+    });
+
+    async function endCurrentInterview() {
+      if (state.timerInterval) clearInterval(state.timerInterval);
+      setLoading(true, 'Finalizing your interview report...');
+
+      try {
+        if (state.currentSessionId) {
+          await fetch(`/api/interview/${state.currentSessionId}/end`, { method: 'POST' });
+        }
+      } catch (e) {
+        console.warn('End session request:', e);
+      } finally {
+        setLoading(false);
+      }
+
+      switchView('resultsView');
+      const avg = state.scores.length ? state.scores.reduce((a, b) => a + b, 0) / state.scores.length : 0;
+      const best = state.scores.length ? Math.max(...state.scores) : 0;
+
+      document.getElementById('finalScore').textContent = avg.toFixed(1);
+      document.getElementById('statQuestions').textContent = state.scores.length;
+      document.getElementById('statAvg').textContent = avg.toFixed(1);
+      document.getElementById('statBest').textContent = best.toFixed(1);
+
+      const summary = document.getElementById('resultsSummary');
+      if (avg >= 8) {
+        summary.textContent = 'Outstanding performance! You displayed exceptional technical depth and structured communication.';
+      } else if (avg >= 5) {
+        summary.textContent = 'Good foundation! Review the identified missing nuances and practice structuring your responses.';
+      } else {
+        summary.textContent = 'Identified key revision areas. Focus on core technical principles and try another session!';
+      }
+    }
+
+    // 3. DASHBOARD STATS LOADER
+    async function loadDashboardStats() {
+      try {
+        const res = await fetch('/api/dashboard/stats');
+        const data = await res.json();
+
+        document.getElementById('dashTotalInterviews').textContent = data.totalInterviews || 0;
+        document.getElementById('dashAvgScore').textContent = (data.avgScore || 0).toFixed(1);
+        document.getElementById('dashBestScore').textContent = (data.bestScore || 0).toFixed(1);
+        document.getElementById('dashStreak').textContent = `${data.streak || 0} Days`;
+
+        // Daily Challenge Card
+        if (data.dailyChallenge) {
+          document.getElementById('dailyQuestionText').textContent = data.dailyChallenge.question_text;
+          document.getElementById('dailyCategory').textContent = data.dailyChallenge.category || 'Technical';
+          state.todayChallengeId = data.dailyChallenge.id;
+        }
+
+        // Recent Sessions
+        const recentContainer = document.getElementById('recentHistoryList');
+        if (data.recentSessions && data.recentSessions.length > 0) {
+          recentContainer.innerHTML = '';
+          data.recentSessions.forEach(s => {
+            const row = document.createElement('div');
+            row.className = 'card';
+            row.style.padding = '0.85rem 1.25rem';
+            row.style.background = 'var(--bg-elevated)';
+            row.style.display = 'flex';
+            row.style.alignItems = 'center';
+            row.style.justifyContent = 'space-between';
+            row.innerHTML = `
+              <div>
+                <strong style="color: var(--text);">${s.role}</strong>
+                <span class="tag accent" style="margin-left: 0.5rem;">${s.difficulty}</span>
+                <span class="tag" style="margin-left: 0.25rem;">${s.interview_type}</span>
+                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.25rem;">${new Date(s.started_at).toLocaleDateString()}</div>
+              </div>
+              <div style="font-size: 1.35rem; font-weight: 800; color: var(--accent-strong);">${(s.overall_score || 0).toFixed(1)}/10</div>
+            `;
+            recentContainer.appendChild(row);
+          });
+        }
+
+        // Render Charts with live data
+        renderDashboardCharts(data);
+      } catch (err) {
+        console.error('Failed to load dashboard stats:', err);
+      }
+    }
+
+    function renderDashboardCharts(data) {
+      const perfCtx = document.getElementById('performanceChart');
+      if (perfCtx) {
+        const labels = data.progression && data.progression.length ? data.progression.map((p, i) => `Session ${i + 1}`) : ['Session 1', 'Session 2'];
+        const scores = data.progression && data.progression.length ? data.progression.map(p => p.overall_score) : [6.5, 7.5];
+
+        if (perfChartInstance) perfChartInstance.destroy();
+        perfChartInstance = new Chart(perfCtx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [{
+              label: 'Overall Score',
+              data: scores,
+              borderColor: '#6366f1',
+              backgroundColor: 'rgba(99, 102, 241, 0.12)',
+              fill: true,
+              tension: 0.35,
+              borderWidth: 2.5
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { min: 0, max: 10, grid: { color: '#1e2e4a' }, ticks: { color: '#8899b2' } },
+              x: { grid: { color: '#1e2e4a' }, ticks: { color: '#8899b2' } }
+            }
+          }
+        });
+      }
+
+      const compCtx = document.getElementById('competencyChart');
+      if (compCtx) {
+        const comp = data.competencies || { clarity: 7, relevance: 7.5, depth: 6.8, communication: 7.2, problemSolving: 7 };
+        if (compChartInstance) compChartInstance.destroy();
+        compChartInstance = new Chart(compCtx, {
+          type: 'radar',
+          data: {
+            labels: ['Correctness', 'Relevance', 'Clarity', 'Depth', 'Communication'],
+            datasets: [{
+              label: 'Mastery Profile',
+              data: [comp.problemSolving, comp.relevance, comp.clarity, comp.depth, comp.communication],
+              borderColor: '#8b5cf6',
+              backgroundColor: 'rgba(139, 92, 246, 0.25)',
+              borderWidth: 2
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              r: {
+                min: 0,
+                max: 10,
+                grid: { color: '#1e2e4a' },
+                angleLines: { color: '#1e2e4a' },
+                pointLabels: { color: '#8899b2', font: { size: 10 } },
+                ticks: { display: false }
+              }
+            }
+          }
+        });
+      }
+    }
+
+    // Daily Challenge Button
+    document.getElementById('solveDailyBtn').addEventListener('click', () => {
+      const answer = prompt(`Daily Challenge:\n\n${document.getElementById('dailyQuestionText').textContent}\n\nType your answer:`);
+      if (answer && answer.trim().length > 5) {
+        setLoading(true, 'Evaluating daily challenge response...');
+        fetch('/api/challenge/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ challengeId: state.todayChallengeId || 1, answer })
+        })
+          .then(r => r.json())
+          .then(res => {
+            showToast(`Challenge completed! Score: ${res.evaluation.overall}/10. Streak: ${res.streak} days!`, 'success');
+            loadDashboardStats();
+          })
+          .catch(() => showToast('Failed to submit challenge', 'error'))
+          .finally(() => setLoading(false));
+      }
+    });
+
+    // 4. RESUME UPLOAD & PARSER FLOW
+    const resumeDropZone = document.getElementById('resumeDropZone');
+    const resumeFileInput = document.getElementById('resumeFileInput');
+    const browseResumeBtn = document.getElementById('browseResumeBtn');
+
+    if (browseResumeBtn) {
+      browseResumeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        resumeFileInput.click();
+      });
+    }
+
+    if (resumeDropZone) {
+      resumeDropZone.addEventListener('click', () => resumeFileInput.click());
+
+      resumeDropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        resumeDropZone.style.borderColor = 'var(--accent)';
+        resumeDropZone.style.background = 'rgba(99, 102, 241, 0.08)';
+      });
+
+      resumeDropZone.addEventListener('dragleave', () => {
+        resumeDropZone.style.borderColor = 'var(--border)';
+        resumeDropZone.style.background = 'rgba(99, 102, 241, 0.03)';
+      });
+
+      resumeDropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        resumeDropZone.style.borderColor = 'var(--border)';
+        resumeDropZone.style.background = 'rgba(99, 102, 241, 0.03)';
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          processUploadedResume(e.dataTransfer.files[0]);
+        }
+      });
+    }
+
+    if (resumeFileInput) {
+      resumeFileInput.addEventListener('change', () => {
+        if (resumeFileInput.files && resumeFileInput.files[0]) {
+          processUploadedResume(resumeFileInput.files[0]);
+        }
+      });
+    }
+
+    async function processUploadedResume(file) {
+      if (!file) return;
+
+      setLoading(true, `Uploading and analyzing ${file.name}...`);
+      try {
+        const reader = new FileReader();
+        reader.onload = async function() {
+          try {
+            const base64Data = (reader.result || '').split(',')[1] || '';
+            const res = await fetch('/api/resume/upload', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                filename: file.name,
+                base64: base64Data
+              })
+            });
+
+            const data = await res.json();
+            if (!res.ok || data.error) {
+              throw new Error(data.error || 'Failed to process resume');
+            }
+
+            state.currentResumeId = data.resumeId;
+
+            // Show file status UI
+            document.getElementById('fileUploadStatus').style.display = 'flex';
+            document.getElementById('uploadedFileName').textContent = file.name;
+            document.getElementById('uploadedFileSize').textContent = `${(file.size / 1024).toFixed(1)} KB • ${(data.textLength || 0)} characters analyzed`;
+
+            // Render extracted skills
+            const skillsContainer = document.getElementById('extractedSkillsList');
+            skillsContainer.innerHTML = '';
+            (data.skills || []).forEach(s => {
+              const pill = document.createElement('span');
+              pill.className = 'tag accent';
+              pill.textContent = s;
+              skillsContainer.appendChild(pill);
+            });
+
+            // Render extracted projects
+            const projContainer = document.getElementById('extractedProjectsList');
+            projContainer.innerHTML = '';
+            (data.projects || []).forEach(p => {
+              const item = document.createElement('div');
+              item.style.padding = '0.5rem 0.75rem';
+              item.style.background = 'var(--bg)';
+              item.style.borderRadius = 'var(--radius-sm)';
+              item.style.fontSize = '0.85rem';
+              item.textContent = `💼 ${p}`;
+              projContainer.appendChild(item);
+            });
+
+            document.getElementById('extractedResumeCard').style.display = 'block';
+            showToast(`Resume uploaded & parsed! Found ${data.skills.length} skills and ${data.projects.length} project areas.`, 'success');
+          } catch (err) {
+            console.error('Resume process error:', err);
+            showToast(err.message || 'Failed to parse resume document', 'error');
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        reader.onerror = function() {
+          setLoading(false);
+          showToast('Failed to read resume file from disk', 'error');
+        };
+
+        reader.readAsDataURL(file);
+      } catch (err) {
+        setLoading(false);
+        showToast('Error uploading resume file', 'error');
+      }
+    }
+
+    // Launch resume-based mock interview directly
+    document.getElementById('startResumeInterviewBtn').addEventListener('click', async () => {
+      setLoading(true, 'Generating project-specific technical questions from your resume...');
+      try {
+        const res = await fetch('/api/resume/generate-interview', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ resumeId: state.currentResumeId })
+        });
+        const data = await res.json();
+
+        state.currentSessionId = data.sessionId;
+        state.currentRole = data.role;
+        state.totalQuestions = data.totalQuestions || 5;
+        state.questionIndex = 0;
+        state.scores = [];
+
+        document.getElementById('roomRoleTag').textContent = 'Resume-Based Candidate';
+        document.getElementById('roomTypeTag').textContent = 'Resume-Based Interview';
+        document.getElementById('roomDiffTag').textContent = 'Project Deep-Dive';
+        document.getElementById('totalQ').textContent = '5';
+        document.getElementById('currentQ').textContent = '1';
+
+        renderQuestion(data);
+        startTimer(20);
+        switchView('interviewView');
+        showToast('Resume interview started! Answer based on your real project experience.', 'success');
+      } catch (err) {
+        console.error('Launch resume interview error:', err);
+        showToast('Failed to launch resume interview', 'error');
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    // 5. HISTORY LOADER
+    async function loadHistoryList() {
+      const container = document.getElementById('fullHistoryList');
+      container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading history records...</div>';
+
+      try {
+        const res = await fetch('/api/history');
+        const list = await res.json();
+
+        if (list.length === 0) {
+          container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 3rem;">No past interviews found. Start your first session now!</div>';
+          return;
+        }
+
+        container.innerHTML = '';
+        list.forEach(item => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          card.style.background = 'var(--bg-elevated)';
+          card.style.display = 'flex';
+          card.style.alignItems = 'center';
+          card.style.justifyContent = 'space-between';
+          card.style.gap = '1rem';
+          card.style.flexWrap = 'wrap';
+
+          card.innerHTML = `
+            <div>
+              <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--text);">${item.role}</h3>
+              <div style="display: flex; gap: 0.5rem; margin: 0.35rem 0;">
+                <span class="tag accent">${item.interview_type}</span>
+                <span class="tag">${item.difficulty}</span>
+                <span class="tag emerald">${item.status}</span>
+              </div>
+              <div style="font-size: 0.75rem; color: var(--text-dim);">${new Date(item.started_at).toLocaleString()} • ${item.question_count} Questions</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1.25rem;">
+              <div style="text-align: right;">
+                <div style="font-size: 1.75rem; font-weight: 800; color: var(--accent-strong);">${(item.overall_score || 0).toFixed(1)}/10</div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">Average Score</div>
+              </div>
+              <button class="btn btn-secondary btn-sm" onclick="alert('Session ID: ${item.id}\\nRole: ${item.role}\\nScore: ${item.overall_score}/10')">View Details</button>
+            </div>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        container.innerHTML = '<div style="color: var(--danger); padding: 2rem; text-align: center;">Failed to load interview history.</div>';
+      }
+    }
+
+    // 6. ANALYTICS VIEW LOADER
+    async function loadAnalyticsView() {
+      try {
+        const res = await fetch('/api/dashboard/stats');
+        const data = await res.json();
+
+        const lineCtx = document.getElementById('analyticsLineChart');
+        if (lineCtx) {
+          const labels = data.progression && data.progression.length ? data.progression.map((p, i) => `S${i + 1}`) : ['S1', 'S2'];
+          const scores = data.progression && data.progression.length ? data.progression.map(p => p.overall_score) : [6.5, 7.5];
+
+          if (analyticsLineInstance) analyticsLineInstance.destroy();
+          analyticsLineInstance = new Chart(lineCtx, {
+            type: 'line',
+            data: {
+              labels,
+              datasets: [{
+                label: 'Score Over Time',
+                data: scores,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                fill: true,
+                tension: 0.3,
+                borderWidth: 2.5
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: { min: 0, max: 10, grid: { color: '#1e2e4a' }, ticks: { color: '#8899b2' } },
+                x: { grid: { color: '#1e2e4a' }, ticks: { color: '#8899b2' } }
+              }
+            }
+          });
+        }
+
+        const radarCtx = document.getElementById('analyticsRadarChart');
+        if (radarCtx) {
+          const comp = data.competencies || { clarity: 7, relevance: 7.5, depth: 6.8, communication: 7.2, problemSolving: 7 };
+          if (analyticsRadarInstance) analyticsRadarInstance.destroy();
+          analyticsRadarInstance = new Chart(radarCtx, {
+            type: 'radar',
+            data: {
+              labels: ['Correctness', 'Relevance', 'Clarity', 'Depth', 'Communication'],
+              datasets: [{
+                label: 'Dimension Mastery',
+                data: [comp.problemSolving, comp.relevance, comp.clarity, comp.depth, comp.communication],
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.25)',
+                borderWidth: 2
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                r: {
+                  min: 0,
+                  max: 10,
+                  grid: { color: '#1e2e4a' },
+                  angleLines: { color: '#1e2e4a' },
+                  pointLabels: { color: '#8899b2', font: { size: 10 } },
+                  ticks: { display: false }
+                }
+              }
+            }
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load analytics charts:', err);
+      }
+    }
+
+    // 7. CODING CHALLENGES
+    async function loadCodingChallenges() {
+      try {
+        const res = await fetch('/api/coding/challenges');
+        state.codingChallenges = await res.json();
+        renderCodingChallenge(state.currentChallengeIndex);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderCodingChallenge(index) {
+      if (!state.codingChallenges || state.codingChallenges.length === 0) return;
+      const c = state.codingChallenges[index % state.codingChallenges.length];
+      document.getElementById('codeChallengeTitle').textContent = c.title;
+      document.getElementById('codeChallengeDesc').textContent = c.description;
+      document.getElementById('codeComplexity').textContent = c.expected_complexity || 'O(n)';
+      document.getElementById('codeEditorInput').value = c.starter_code;
+      document.getElementById('codeTestResults').textContent = 'Click "Run Code & Tests" to execute your solution.';
+      state.activeChallengeId = c.id;
+    }
+
+    document.getElementById('nextChallengeBtn').addEventListener('click', () => {
+      state.currentChallengeIndex++;
+      renderCodingChallenge(state.currentChallengeIndex);
+    });
+
+    document.getElementById('runCodeBtn').addEventListener('click', async () => {
+      const code = document.getElementById('codeEditorInput').value;
+      const resultsDiv = document.getElementById('codeTestResults');
+      resultsDiv.textContent = 'Running test cases in sandbox...';
+
+      try {
+        const res = await fetch('/api/coding/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, challengeId: state.activeChallengeId })
+        });
+        const data = await res.json();
+
+        if (data.allPassed) {
+          resultsDiv.innerHTML = `<span style="color: var(--emerald); font-weight: 700;">✓ All ${data.totalCount} test cases passed! Great job!</span>`;
+        } else {
+          let html = `<span style="color: var(--danger); font-weight: 700;">✗ ${data.passedCount}/${data.totalCount} test cases passed.</span><br>`;
+          (data.results || []).forEach(r => {
+            if (r.passed) {
+              html += `<div style="color: var(--emerald); margin-top: 0.25rem;">• Test Case ${r.testCase}: PASSED</div>`;
+            } else {
+              html += `<div style="color: var(--danger); margin-top: 0.25rem;">• Test Case ${r.testCase}: FAILED ${r.error ? `(${r.error})` : `(Expected: ${JSON.stringify(r.expected)}, Got: ${JSON.stringify(r.actual)})`}</div>`;
+            }
+          });
+          resultsDiv.innerHTML = html;
+        }
+      } catch (err) {
+        resultsDiv.innerHTML = `<span style="color: var(--danger);">Execution error: ${err.message}</span>`;
+      }
+    });
+
+    // Initial Dashboard Load
+    loadDashboardStats();
+  </script>
+</body>
+</html>
